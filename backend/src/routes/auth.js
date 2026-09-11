@@ -16,14 +16,21 @@ export function createAuthRouter({ userRepository, jwtSecret }) {
   const router = express.Router();
 
   router.post('/login', async (req, res, next) => {
-    const username = req.body?.nombre_usuario?.trim();
-    const password = req.body?.contrasena;
+    const rawUsername = req.body?.nombre_usuario;
+    const rawPassword = req.body?.contrasena;
 
-    if (!username || typeof password !== 'string' || !password.trim()) {
+    if (
+      typeof rawUsername !== 'string'
+      || typeof rawPassword !== 'string'
+      || !rawUsername.trim()
+      || !rawPassword.trim()
+    ) {
       return res.status(400).json({
         error: 'Usuario y contraseña son obligatorios.',
       });
     }
+    const username = rawUsername.trim();
+    const password = rawPassword;
 
     try {
       const user = await userRepository.findByUsername(username);
