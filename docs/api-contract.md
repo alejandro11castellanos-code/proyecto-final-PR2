@@ -17,6 +17,11 @@ Todas las respuestas son JSON. Salvo login y `/health`, cada endpoint exige
 | GET    | `/health` | Estado del servicio   | —   | 0 ✅ |
 | POST   | `/auth/login` | Inicia sesión y devuelve un JWT | — | 1 ✅ |
 | GET    | `/auth/me` | Devuelve el usuario autenticado | * | 1 ✅ |
+| GET    | `/usuarios` | Lista usuarios (sin hash) | administrador | 2 ✅ |
+| POST   | `/usuarios` | Crea un usuario | administrador | 2 ✅ |
+| PUT    | `/usuarios/:id` | Edita nombre y rol | administrador | 2 ✅ |
+| PUT    | `/usuarios/:id/contrasena` | Restablece la contraseña | administrador | 2 ✅ |
+| DELETE | `/usuarios/:id` | Elimina un usuario | administrador | 2 ✅ |
 | GET    | `/artistas` | Lista artistas | * | 2 ✅ |
 | GET    | `/artistas/:id` | Detalle de un artista | * | 2 ✅ |
 | POST   | `/artistas` | Crea un artista | administrador | 2 ✅ |
@@ -88,6 +93,24 @@ Un token ausente, inválido o perteneciente a un usuario eliminado responde `401
 Lectura (`GET`) abierta a cualquier rol autenticado — el vendedor la necesita
 para armar la venta. Escritura (`POST`/`PUT`/`DELETE`) exclusiva de
 `administrador`; un vendedor recibe `403`.
+
+### Usuarios
+
+Todo `/usuarios/*` es exclusivo de `administrador` (incluida la lectura: no
+hay razón para que un vendedor vea la lista de usuarios).
+
+`POST /usuarios` exige `nombre_usuario`, `contrasena` (mínimo 6
+caracteres), `nombre_completo` y `rol` (`administrador` | `vendedor`).
+Responde `409` si `nombre_usuario` ya existe. Ninguna respuesta incluye
+`contrasena_hash`.
+
+`PUT /usuarios/:id` edita `nombre_completo` y `rol` (no el nombre de
+usuario, que es el identificador de login). `PUT /usuarios/:id/contrasena`
+restablece la contraseña por separado, con el mismo mínimo de 6 caracteres.
+
+`DELETE /usuarios/:id` responde `400` si el administrador intenta eliminar
+su propia cuenta, y `409` si el usuario tiene ventas registradas
+(`ventas.id_vendedor` lo referencia).
 
 ### Artistas
 

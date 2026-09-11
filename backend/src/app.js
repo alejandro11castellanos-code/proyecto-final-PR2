@@ -1,6 +1,7 @@
 import express from 'express';
 import { pool } from './db/pool.js';
 import { createAuthRouter } from './routes/auth.js';
+import { createUsuarioRouter } from './routes/usuarios.js';
 import { createArtistaRouter } from './routes/artistas.js';
 import { createLocalidadRouter } from './routes/localidades.js';
 import { createConciertoRouter } from './routes/conciertos.js';
@@ -42,6 +43,7 @@ export function createApp({
   });
 
   app.use('/auth', createAuthRouter({ userRepository, jwtSecret }));
+  app.use('/usuarios', createUsuarioRouter({ userRepository, jwtSecret }));
   app.use('/artistas', createArtistaRouter({ artistaRepository, jwtSecret }));
   app.use('/localidades', createLocalidadRouter({ localidadRepository, jwtSecret }));
   app.use(
