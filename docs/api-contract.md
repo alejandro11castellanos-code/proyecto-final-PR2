@@ -31,6 +31,10 @@ Todas las respuestas son JSON. Salvo login y `/health`, cada endpoint exige
 | POST   | `/conciertos` | Crea un concierto | administrador | 2 ✅ |
 | PUT    | `/conciertos/:id` | Edita un concierto (requiere `estado`) | administrador | 2 ✅ |
 | DELETE | `/conciertos/:id` | Elimina un concierto | administrador | 2 ✅ |
+| GET    | `/conciertos/:id/inventario` | Aforo y disponibilidad por localidad (tiempo real) | * | 3 ✅ |
+| POST   | `/conciertos/:id/inventario` | Asigna precio y aforo a una localidad | administrador | 3 ✅ |
+| PUT    | `/conciertos/:id/inventario/:idInventario` | Edita precio/aforo preservando lo vendido | administrador | 3 ✅ |
+| DELETE | `/conciertos/:id/inventario/:idInventario` | Quita una localidad del concierto | administrador | 3 ✅ |
 
 ## Fase 1 — Autenticación
 
@@ -116,14 +120,45 @@ responde `409` si el concierto tiene inventario o ventas asociadas.
 }
 ```
 
+## Fase 3 — Inventario y aforo
+
+Anidado bajo el concierto: `/conciertos/:idConcierto/inventario`. Lectura
+abierta a cualquier rol (el vendedor la necesita para ver disponibilidad
+antes de vender); escritura solo `administrador`.
+
+`POST` exige `id_localidad` (debe existir), `precio` (`>= 0`) y
+`cantidad_total` (entero positivo); `cantidad_disponible` arranca igual a
+`cantidad_total`. Responde `409` si esa localidad ya tiene aforo asignado
+para ese concierto.
+
+`PUT /conciertos/:id/inventario/:idInventario` recibe `precio` y
+`cantidad_total` nuevos y **preserva lo ya vendido**: internamente
+`cantidad_disponible` se ajusta por la diferencia entre el aforo nuevo y el
+viejo, nunca se resetea. Si el nuevo aforo cae por debajo de lo ya vendido,
+la base de datos rechaza el cambio (`CHECK`) y la API responde `400`.
+
+`DELETE` responde `409` si ese registro ya tiene boletos vendidos
+(`detalle_ventas` lo referencia).
+
+```json
+// POST /conciertos/1/inventario
+{ "id_localidad": 2, "precio": 450.00, "cantidad_total": 300 }
+```
+
+```json
+// respuesta 201 (y forma de cada fila en GET)
+{
+  "id_inventario": 5,
+  "id_concierto": 1,
+  "id_localidad": 2,
+  "nombre_localidad": "Platea",
+  "precio": "450.00",
+  "cantidad_total": 300,
+  "cantidad_disponible": 300
+}
+```
+
 ## Endpoints planificados
-
-### Fase 3 — Inventario y disponibilidad
-
-| Método | Ruta                                   | Descripción                                  |
-|--------|----------------------------------------|----------------------------------------------|
-| POST   | `/conciertos/:id/inventario`           | Asignar aforo y precio por localidad         |
-| GET    | `/conciertos/:id/disponibilidad`       | Boletos disponibles por localidad (tiempo real) |
 
 ### Fase 4 — Venta transaccional
 
