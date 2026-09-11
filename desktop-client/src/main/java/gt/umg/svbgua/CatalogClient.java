@@ -103,6 +103,21 @@ public final class CatalogClient {
         return getList("/conciertos/" + idConcierto + "/inventario", token, Inventario[].class);
     }
 
+    public Inventario createInventario(String token, int idConcierto, int idLocalidad, double precio, int cantidadTotal) {
+        return send("POST", "/conciertos/" + idConcierto + "/inventario", token,
+                new InventarioCreateRequest(idLocalidad, precio, cantidadTotal), Inventario.class);
+    }
+
+    public Inventario updateInventario(
+            String token, int idConcierto, int idInventario, double precio, int cantidadTotal) {
+        return send("PUT", "/conciertos/" + idConcierto + "/inventario/" + idInventario, token,
+                new InventarioUpdateRequest(precio, cantidadTotal), Inventario.class);
+    }
+
+    public void deleteInventario(String token, int idConcierto, int idInventario) {
+        delete("/conciertos/" + idConcierto + "/inventario/" + idInventario, token);
+    }
+
     // ---- Ventas ----
 
     public Venta crearVenta(String token, List<ItemVenta> items) {
@@ -235,6 +250,12 @@ public final class CatalogClient {
 
     private record ConciertoRequest(
             int idArtista, String tituloEvento, String fechaConcierto, String recinto, String estado) {
+    }
+
+    private record InventarioCreateRequest(int idLocalidad, double precio, int cantidadTotal) {
+    }
+
+    private record InventarioUpdateRequest(double precio, int cantidadTotal) {
     }
 
     private record VentaRequest(List<ItemVenta> items) {
