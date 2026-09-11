@@ -20,7 +20,26 @@ Cliente JavaFX  ──HTTP/REST──▶  API Node.js + Express  ──▶  Post
 | `desktop-client/`| Cliente de escritorio JavaFX (Maven)                   |
 | `docs/`          | Contrato de API y documentación de diseño              |
 
-## Puesta en marcha
+## Puesta en marcha (Docker, recomendado para desarrollo local)
+
+Levanta Postgres + backend con hot-reload. Requiere Docker Desktop corriendo.
+
+```bash
+docker compose up -d --build   # primera vez o tras cambiar el Dockerfile
+docker compose exec backend npm run db:seed   # solo la primera vez
+curl http://localhost:3000/health
+```
+
+- El esquema (`database/schema.sql`) se aplica solo, automáticamente, la primera
+  vez que se crea el volumen de datos.
+- El backend corre con `node --watch`: los cambios en `backend/` se reflejan sin
+  reconstruir la imagen.
+- Postgres queda expuesto en `localhost:5432` (`svb_gua`/`svb_gua_dev`) para
+  conectarte con TablePlus, DBeaver, etc.
+- Para empezar de cero (borra los datos): `docker compose down -v`.
+- Logs: `docker compose logs -f backend`.
+
+## Puesta en marcha (sin Docker, contra Neon/Supabase)
 
 ### 1. Base de datos
 

@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: svb-gua-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: svb_gua
+      POSTGRES_USER: svb_gua
+      POSTGRES_PASSWORD: svb_gua_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - svb_gua_pgdata:/var/lib/postgresql/data
+      # Se ejecuta solo una vez, al crear el volumen desde cero.
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U svb_gua -d svb_gua"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: svb-gua-backend
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://svb_gua:svb_gua_dev@db:5432/svb_gua
+      DATABASE_SSL: "false"
+      JWT_SECRET: dev-secret-cambiar
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      # scripts/seed.js espera database/seed.sql un nivel arriba de /app
+      - ./database:/database:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    command: npm run dev
+
+volumes:
+  svb_gua_pgdata:
