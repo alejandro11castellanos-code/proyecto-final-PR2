@@ -91,6 +91,8 @@ public final class ConciertosPane extends BorderPane {
                 return artistaCombo.getValue();
             }
         });
+        // Un artista pudo darse de alta en otra pestaña después de armar esta.
+        artistaCombo.setOnShowing(event -> cargarArtistas());
         tituloField.setPromptText("Título del evento");
         fechaField.setPromptText("Fecha (ISO 8601, ej. 2026-11-15T20:00:00Z)");
         recintoField.setPromptText("Recinto");
