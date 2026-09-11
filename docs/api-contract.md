@@ -213,12 +213,50 @@ más (`cantidad_disponible` no baja de `0`).
 }
 ```
 
+## Fase 5 — Códigos QR y envío por correo
+
+No existe una tabla de boletos individuales: cada **ítem de la venta**
+(`detalle_ventas`) genera un único QR que representa esas `cantidad`
+entradas de esa localidad — no un QR por asiento.
+
+| Método | Ruta                  | Descripción                        | Rol |
+|--------|-----------------------|-------------------------------------|-----|
+| GET    | `/ventas/:id/boletos` | Genera el QR de cada ítem de la venta | *   |
+| POST   | `/ventas/:id/enviar`  | Genera los QR y los envía por correo  | *   |
+
+El código de cada boleto es `SVBGUA-V<id_venta>-D<id_detalle>` y el QR viaja
+como `data:image/png;base64,...` (se puede decodificar directo en el cliente
+de escritorio o incrustar en un `<img>`).
+
+```json
+// GET /ventas/1/boletos
+{
+  "id_venta": 1,
+  "boletos": [
+    {
+      "id_detalle": 1,
+      "titulo_evento": "Gira Aniversario 2026",
+      "nombre_localidad": "VIP",
+      "cantidad": 2,
+      "codigo": "SVBGUA-V1-D1",
+      "qr": "data:image/png;base64,iVBORw0KGgo..."
+    }
+  ]
+}
+```
+
+`POST /ventas/:id/enviar` recibe `{ "email": "..." }`, valida el formato y
+manda un correo HTML con el QR de cada ítem incrustado (`cid`) más el PNG
+adjunto. Requiere `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS`/`SMTP_FROM`
+en el entorno; sin `SMTP_HOST` configurado responde `502` con un mensaje
+claro en vez de fallar oscuro dentro de nodemailer. Verificado enviando un
+correo real a una casilla de prueba (Ethereal): asunto, remitente y los QR
+incrustados llegan correctos y son escaneables.
+
 ## Endpoints planificados
 
-### Fases 5-6 — QR/correo y reportes
+### Fase 6 — Reportes
 
 | Método | Ruta                          | Descripción                              |
 |--------|-------------------------------|------------------------------------------|
-| GET    | `/ventas/:id/boletos`         | Códigos QR de la venta                   |
-| POST   | `/ventas/:id/enviar`          | Envía los boletos por correo             |
 | GET    | `/reportes/ventas`            | Datos para reportes (por concierto/artista/vendedor) |
