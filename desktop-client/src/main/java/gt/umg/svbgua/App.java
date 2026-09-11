@@ -10,6 +10,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -77,14 +78,16 @@ public class App extends Application {
             return;
         }
 
-        Label bienvenida = new Label("Bienvenido, " + usuario.nombreCompleto() + " (" + usuario.rol() + ").\n"
-                + "El punto de venta para vendedores llega en la fase 4.");
-        bienvenida.setWrapText(true);
-        VBox root = new VBox(bienvenida);
-        root.setAlignment(Pos.CENTER);
-        root.setPadding(new Insets(32));
-        stage.setScene(new Scene(root, 480, 360));
-        stage.setTitle("SVB-GUA — " + usuario.nombreCompleto());
+        Label header = new Label("Punto de venta — " + usuario.nombreCompleto());
+        header.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+        header.setPadding(new Insets(16, 16, 0, 16));
+
+        BorderPane root = new BorderPane();
+        root.setTop(header);
+        root.setCenter(new VentaPane(catalogClient, token));
+
+        stage.setScene(new Scene(root, 900, 620));
+        stage.setTitle("SVB-GUA — Punto de venta");
     }
 
     public static void main(String[] args) {

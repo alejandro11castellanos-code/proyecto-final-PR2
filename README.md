@@ -82,7 +82,7 @@ mvn javafx:run
 | 1    | Autenticación y roles (`administrador` / `vendedor`)        | ✅     |
 | 2    | Catálogo de administración (artistas, conciertos, localidades) | ✅     |
 | 3    | Inventario y consulta de aforo en tiempo real              | 🟡 API lista; falta la pantalla JavaFX |
-| 4    | Venta transaccional con múltiples boletos                  | 🟡 API lista; falta el punto de venta en JavaFX |
+| 4    | Venta transaccional con múltiples boletos                  | ✅     |
 | 5    | Generación de QR y envío por correo                        | ⬜     |
 | 6    | Reportes con JasperReports                                 | ⬜     |
 | 7    | Empaquetado `.jar` y despliegue final                      | ⬜     |
