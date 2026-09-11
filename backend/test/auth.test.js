@@ -61,6 +61,58 @@ test('POST /auth/login valida credenciales faltantes o en blanco', async () => {
   }
 });
 
+test('POST /auth/login rechaza credenciales con tipos inválidos', async () => {
+  const app = createApp({ userRepository: repositoryWith(), jwtSecret });
+
+  for (const body of [
+    { nombre_usuario: 123, contrasena: 'clave-correcta' },
+    { nombre_usuario: {}, contrasena: 'clave-correcta' },
+    { nombre_usuario: [], contrasena: 'clave-correcta' },
+    { nombre_usuario: 'ana', contrasena: 123 },
+    { nombre_usuario: 'ana', contrasena: {} },
+    { nombre_usuario: 'ana', contrasena: [] },
+    { nombre_usuario: null, contrasena: null },
+  ]) {
+    const response = await request(app).post('/auth/login').send(body);
+    assert.equal(response.status, 400);
+    assert.deepEqual(response.body, {
+      error: 'Usuario y contraseña son obligatorios.',
+    });
+  }
+});
+
+test('la API responde JSON cuando el cuerpo de la solicitud está mal formado', async () => {
+  const app = createApp({ userRepository: repositoryWith(), jwtSecret });
+
+  const response = await request(app)
+    .post('/auth/login')
+    .set('Content-Type', 'application/json')
+    .send('{"nombre_usuario":');
+
+  assert.equal(response.status, 400);
+  assert.deepEqual(response.body, { error: 'El cuerpo JSON no es válido.' });
+});
+
+test('la API no filtra detalles cuando el repositorio falla', async () => {
+  const failingRepository = {
+    async findByUsername() {
+      throw new Error('password=secreto host=interno');
+    },
+    async findPublicById() {
+      throw new Error('password=secreto host=interno');
+    },
+  };
+  const app = createApp({ userRepository: failingRepository, jwtSecret });
+
+  const response = await request(app)
+    .post('/auth/login')
+    .send({ nombre_usuario: 'ana', contrasena: 'clave-correcta' });
+
+  assert.equal(response.status, 500);
+  assert.deepEqual(response.body, { error: 'Ocurrió un error interno.' });
+  assert.equal(response.text.includes('secreto'), false);
+});
+
 test('POST /auth/login no revela si falló el usuario o la contraseña', async () => {
   const app = createApp({ userRepository: repositoryWith(), jwtSecret });
 

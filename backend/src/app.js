@@ -39,5 +39,13 @@ export function createApp({
     createConciertoRouter({ conciertoRepository, artistaRepository, jwtSecret }),
   );
 
+  // Express identifica los errores de parseo JSON antes de llegar a las rutas.
+  app.use((error, _req, res, _next) => {
+    if (error?.type === 'entity.parse.failed') {
+      return res.status(400).json({ error: 'El cuerpo JSON no es válido.' });
+    }
+    return res.status(500).json({ error: 'Ocurrió un error interno.' });
+  });
+
   return app;
 }
