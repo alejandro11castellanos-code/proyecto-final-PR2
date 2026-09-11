@@ -87,6 +87,15 @@ mvn javafx:run
 | 6    | Reportes con JasperReports                                 | ⬜     |
 | 7    | Empaquetado `.jar` y despliegue final                      | ⬜     |
 
+## Extras (fuera del alcance original)
+
+- **Adelanto musical del artista:** en `Conciertos`, el botón "▶ Escuchar"
+  busca un adelanto de ~30s del artista seleccionado. Usa la iTunes Search
+  API como fuente principal y Deezer como respaldo — ambas públicas, sin
+  autenticación. Se descartó el Web Playback SDK de Spotify: corre solo en
+  navegador, exige cuenta Premium por usuario y OAuth, nada de lo cual
+  encaja en un cliente de escritorio Java.
+
 ## Equipo
 
 - **Backend (2):** BD, API REST, autenticación, gestión transaccional, despliegue en Render.
