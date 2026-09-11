@@ -17,7 +17,7 @@ import javafx.stage.Stage;
 public class App extends Application {
 
     private final AuthClient authClient = AuthClient.fromEnvironment();
-    private String authToken;
+    private final CatalogClient catalogClient = CatalogClient.fromEnvironment();
 
     @Override
     public void start(Stage stage) {
@@ -37,7 +37,7 @@ public class App extends Application {
         Button loginButton = new Button("Ingresar");
         loginButton.setDefaultButton(true);
         loginButton.setOnAction(event -> login(
-                username.getText(), password.getText(), loginButton, message));
+                stage, username.getText(), password.getText(), loginButton, message));
 
         VBox root = new VBox(14, title, username, password, loginButton, message);
         root.setAlignment(Pos.CENTER);
@@ -48,7 +48,7 @@ public class App extends Application {
         stage.show();
     }
 
-    private void login(String username, String password, Button button, Label message) {
+    private void login(Stage stage, String username, String password, Button button, Label message) {
         if (username == null || username.isBlank() || password == null || password.isBlank()) {
             message.setText("Ingrese su usuario y contraseña.");
             return;
@@ -66,11 +66,25 @@ public class App extends Application {
                         message.setText(cause.getMessage());
                         return;
                     }
-
-                    authToken = result.token();
-                    message.setText("Bienvenido, " + result.usuario().nombreCompleto()
-                            + " (" + result.usuario().rol() + ").");
+                    onLogin(stage, result.token(), result.usuario());
                 }));
+    }
+
+    private void onLogin(Stage stage, String token, AuthClient.Usuario usuario) {
+        if ("administrador".equals(usuario.rol())) {
+            stage.setScene(new Scene(new AdminView(catalogClient, token, usuario.nombreCompleto()), 960, 620));
+            stage.setTitle("SVB-GUA — Administración");
+            return;
+        }
+
+        Label bienvenida = new Label("Bienvenido, " + usuario.nombreCompleto() + " (" + usuario.rol() + ").\n"
+                + "El punto de venta para vendedores llega en la fase 4.");
+        bienvenida.setWrapText(true);
+        VBox root = new VBox(bienvenida);
+        root.setAlignment(Pos.CENTER);
+        root.setPadding(new Insets(32));
+        stage.setScene(new Scene(root, 480, 360));
+        stage.setTitle("SVB-GUA — " + usuario.nombreCompleto());
     }
 
     public static void main(String[] args) {
