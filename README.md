@@ -80,7 +80,7 @@ mvn javafx:run
 |------|------------------------------------------------------------|--------|
 | 0    | Setup: repo, esquema de BD, esqueleto de backend y cliente | ✅     |
 | 1    | Autenticación y roles (`administrador` / `vendedor`)        | ✅     |
-| 2    | Catálogo de administración (artistas, conciertos, localidades) | 🟡 API lista; falta la pantalla JavaFX |
+| 2    | Catálogo de administración (artistas, conciertos, localidades) | ✅     |
 | 3    | Inventario y consulta de aforo en tiempo real              | ⬜     |
 | 4    | Venta transaccional con múltiples boletos                  | ⬜     |
 | 5    | Generación de QR y envío por correo                        | ⬜     |

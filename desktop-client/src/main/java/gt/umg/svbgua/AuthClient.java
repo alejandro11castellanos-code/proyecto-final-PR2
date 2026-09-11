@@ -36,25 +36,62 @@ public final class AuthClient {
 
             HttpResponse<String> response = httpClient.send(
                     request, HttpResponse.BodyHandlers.ofString());
-            JsonNode json = mapper.readTree(response.body());
 
             if (response.statusCode() != 200) {
-                String apiMessage = json.path("error").asText("No fue posible iniciar sesión.");
-                throw new AuthException(apiMessage);
+                throw new AuthException(readApiError(response.body()));
             }
 
-            Usuario usuario = new Usuario(
-                    json.path("usuario").path("id_usuario").asInt(),
-                    json.path("usuario").path("nombre_usuario").asText(),
-                    json.path("usuario").path("nombre_completo").asText(),
-                    json.path("usuario").path("rol").asText());
-            return new LoginResult(json.path("token").asText(), usuario);
+            return readLoginResult(response.body());
         } catch (InterruptedException error) {
             Thread.currentThread().interrupt();
             throw new AuthException("La solicitud fue interrumpida.", error);
         } catch (IOException | IllegalArgumentException error) {
             throw new AuthException("No se pudo conectar con el servidor.", error);
         }
+    }
+
+    private String readApiError(String body) {
+        try {
+            JsonNode json = mapper.readTree(body);
+            if (json != null) {
+                String message = json.path("error").asText();
+                if (!message.isBlank()) {
+                    return message;
+                }
+            }
+        } catch (IOException ignored) {
+            // El servidor puede responder texto o HTML si existe un fallo externo.
+        }
+        return "No fue posible iniciar sesión.";
+    }
+
+    private LoginResult readLoginResult(String body) {
+        try {
+            JsonNode json = mapper.readTree(body);
+            JsonNode user = json == null ? null : json.get("usuario");
+            String token = requiredText(json, "token");
+            String username = requiredText(user, "nombre_usuario");
+            String fullName = requiredText(user, "nombre_completo");
+            String role = requiredText(user, "rol");
+            JsonNode id = user == null ? null : user.get("id_usuario");
+
+            if (id == null || !id.canConvertToInt() || id.asInt() <= 0) {
+                throw new AuthException("La respuesta del servidor está incompleta.");
+            }
+
+            return new LoginResult(
+                    token, new Usuario(id.asInt(), username, fullName, role));
+        } catch (IOException error) {
+            throw new AuthException("La respuesta del servidor no es válida.", error);
+        }
+    }
+
+    private static String requiredText(JsonNode parent, String field) {
+        JsonNode value = parent == null ? null : parent.get(field);
+        if (value == null || !value.isTextual() || value.asText().isBlank()) {
+            throw new AuthException("La respuesta del servidor está incompleta.");
+        }
+        return value.asText();
     }
 
     private record LoginRequest(String nombre_usuario, String contrasena) {
