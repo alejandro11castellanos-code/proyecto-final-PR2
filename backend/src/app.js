@@ -12,6 +12,8 @@ import { createLocalidadRepository } from './repositories/localidades.js';
 import { createConciertoRepository } from './repositories/conciertos.js';
 import { createInventarioRepository } from './repositories/inventario.js';
 import { createVentaRepository } from './repositories/ventas.js';
+import { createQrProvider } from './services/qrcode.js';
+import { createMailer } from './services/mailer.js';
 
 /**
  * Builds the Express application. Kept separate from server startup so tests can
@@ -24,6 +26,8 @@ export function createApp({
   conciertoRepository = createConciertoRepository(pool),
   inventarioRepository = createInventarioRepository(pool),
   ventaRepository = createVentaRepository(pool),
+  qrProvider = createQrProvider(),
+  mailer = createMailer(),
   jwtSecret = process.env.JWT_SECRET,
 } = {}) {
   const app = express();
@@ -48,7 +52,7 @@ export function createApp({
     '/conciertos/:idConcierto/inventario',
     createInventarioRouter({ inventarioRepository, conciertoRepository, localidadRepository, jwtSecret }),
   );
-  app.use('/ventas', createVentaRouter({ ventaRepository, jwtSecret }));
+  app.use('/ventas', createVentaRouter({ ventaRepository, qrProvider, mailer, jwtSecret }));
 
   // Express identifica los errores de parseo JSON antes de llegar a las rutas.
   app.use((error, _req, res, _next) => {
