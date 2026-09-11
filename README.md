@@ -65,8 +65,12 @@ npm run dev            # http://localhost:3000/health
 
 Requiere JDK 21 y Maven.
 
+El cliente usa `http://localhost:3000` por defecto. Para apuntarlo a la API
+desplegada, definir `SVB_API_URL` antes de iniciarlo.
+
 ```bash
 cd desktop-client
+export SVB_API_URL="https://api.ejemplo.com"
 mvn javafx:run
 ```
 
@@ -75,7 +79,7 @@ mvn javafx:run
 | Fase | Objetivo                                                    | Estado |
 |------|------------------------------------------------------------|--------|
 | 0    | Setup: repo, esquema de BD, esqueleto de backend y cliente | ✅     |
-| 1    | Autenticación y roles (`administrador` / `vendedor`)        | ⬜     |
+| 1    | Autenticación y roles (`administrador` / `vendedor`)        | ✅     |
 | 2    | Catálogo de administración (artistas, conciertos, localidades) | ⬜  |
 | 3    | Inventario y consulta de aforo en tiempo real              | ⬜     |
 | 4    | Venta transaccional con múltiples boletos                  | ⬜     |
