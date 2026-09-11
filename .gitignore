@@ -1,0 +1,22 @@
+# Node
+node_modules/
+*.log
+npm-debug.log*
+
+# Env
+.env
+.env.local
+
+# Java / Maven
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
