@@ -1,4 +1,4 @@
-# Contrato de API — SVB-GUA (borrador)
+# Contrato de API — SVB-GUA
 
 Base URL local: `http://localhost:3000`
 Todas las respuestas son JSON. Salvo login y `/health`, cada endpoint exige
@@ -15,15 +15,57 @@ Todas las respuestas son JSON. Salvo login y `/health`, cada endpoint exige
 | Método | Ruta       | Descripción           | Rol | Fase |
 |--------|-----------|-----------------------|-----|------|
 | GET    | `/health` | Estado del servicio   | —   | 0 ✅ |
+| POST   | `/auth/login` | Inicia sesión y devuelve un JWT | — | 1 ✅ |
+| GET    | `/auth/me` | Devuelve el usuario autenticado | * | 1 ✅ |
 
-## Planificado
+## Fase 1 — Autenticación
 
-### Fase 1 — Autenticación
+### Iniciar sesión
 
-| Método | Ruta            | Descripción                          | Rol |
-|--------|-----------------|--------------------------------------|-----|
-| POST   | `/auth/login`   | Devuelve JWT a partir de credenciales | —   |
-| GET    | `/auth/me`      | Datos del usuario autenticado         | *   |
+`POST /auth/login`
+
+```json
+{
+  "nombre_usuario": "vendedor",
+  "contrasena": "vendedor123"
+}
+```
+
+Respuesta `200`:
+
+```json
+{
+  "token": "<jwt>",
+  "usuario": {
+    "id_usuario": 2,
+    "nombre_usuario": "vendedor",
+    "nombre_completo": "Vendedor de prueba",
+    "rol": "vendedor"
+  }
+}
+```
+
+Credenciales faltantes responden `400`; credenciales incorrectas responden `401`
+sin indicar cuál dato falló.
+
+### Consultar la sesión
+
+`GET /auth/me`, con el encabezado `Authorization: Bearer <token>`.
+
+Respuesta `200`:
+
+```json
+{
+  "id_usuario": 2,
+  "nombre_usuario": "vendedor",
+  "nombre_completo": "Vendedor de prueba",
+  "rol": "vendedor"
+}
+```
+
+Un token ausente, inválido o perteneciente a un usuario eliminado responde `401`.
+
+## Endpoints planificados
 
 ### Fase 2 — Catálogo (administrador)
 
