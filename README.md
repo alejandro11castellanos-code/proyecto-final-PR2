@@ -89,9 +89,11 @@ mvn javafx:run
 
 ## Extras (fuera del alcance original)
 
-- **Adelanto musical del artista:** en `Conciertos`, el botón "▶ Escuchar"
-  busca un adelanto de ~30s del artista seleccionado. Usa la iTunes Search
-  API como fuente principal y Deezer como respaldo — ambas públicas, sin
+- **Adelanto musical del artista:** en `Conciertos` y en el punto de venta,
+  un panel muestra imagen + nombre de artista + canción, con botón
+  "▶ Escuchar" para un adelanto de ~30s. Usa la iTunes Search API como
+  fuente principal (imagen = portada del sencillo/álbum) y Deezer como
+  respaldo (imagen = foto real del artista) — ambas públicas, sin
   autenticación. Se descartó el Web Playback SDK de Spotify: corre solo en
   navegador, exige cuenta Premium por usuario y OAuth, nada de lo cual
   encaja en un cliente de escritorio Java.

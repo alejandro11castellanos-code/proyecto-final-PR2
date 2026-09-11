@@ -45,6 +45,7 @@ public final class VentaPane extends BorderPane {
     private final Button confirmarButton = new Button("Confirmar venta");
     private final Button vaciarButton = new Button("Vaciar carrito");
     private final Label status = new Label();
+    private final PreviewPanel previewPanel = new PreviewPanel();
 
     public VentaPane(CatalogClient client, String token) {
         this.client = client;
@@ -52,6 +53,7 @@ public final class VentaPane extends BorderPane {
         setPadding(new Insets(16));
         setTop(buildSeleccionConcierto());
         setCenter(buildContenido());
+        setRight(previewPanel);
         status.setWrapText(true);
         setBottom(status);
         cargarConciertos();
@@ -75,8 +77,10 @@ public final class VentaPane extends BorderPane {
             vaciarCarrito();
             if (current != null) {
                 cargarDisponibilidad(current.idConcierto());
+                previewPanel.cargarParaArtista(current.nombreArtistico());
             } else {
                 disponibilidad.clear();
+                previewPanel.limpiar();
             }
         });
 
