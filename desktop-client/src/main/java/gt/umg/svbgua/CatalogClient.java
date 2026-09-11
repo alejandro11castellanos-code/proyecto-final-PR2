@@ -97,6 +97,18 @@ public final class CatalogClient {
         delete("/conciertos/" + id, token);
     }
 
+    // ---- Inventario (aforo) ----
+
+    public List<Inventario> listInventario(String token, int idConcierto) {
+        return getList("/conciertos/" + idConcierto + "/inventario", token, Inventario[].class);
+    }
+
+    // ---- Ventas ----
+
+    public Venta crearVenta(String token, List<ItemVenta> items) {
+        return send("POST", "/ventas", token, new VentaRequest(items), Venta.class);
+    }
+
     // ---- infraestructura HTTP ----
 
     private <T> List<T> getList(String path, String token, Class<T[]> arrayType) {
@@ -177,6 +189,16 @@ public final class CatalogClient {
             String fechaConcierto, String recinto, String estado) {
     }
 
+    public record Inventario(int idInventario, int idConcierto, int idLocalidad, String nombreLocalidad,
+            String precio, int cantidadTotal, int cantidadDisponible) {
+    }
+
+    public record ItemVenta(int idInventario, int cantidad) {
+    }
+
+    public record Venta(int idVenta, int idVendedor, String fechaVenta, String totalVenta) {
+    }
+
     private record ArtistaRequest(String nombreArtistico, String generoMusical, String paisOrigen) {
     }
 
@@ -185,6 +207,9 @@ public final class CatalogClient {
 
     private record ConciertoRequest(
             int idArtista, String tituloEvento, String fechaConcierto, String recinto, String estado) {
+    }
+
+    private record VentaRequest(List<ItemVenta> items) {
     }
 
     public static final class ApiException extends RuntimeException {

@@ -19,7 +19,8 @@ public final class AdminView extends BorderPane {
         TabPane tabs = new TabPane(
                 tab("Artistas", new ArtistasPane(client, token)),
                 tab("Localidades", new LocalidadesPane(client, token)),
-                tab("Conciertos", new ConciertosPane(client, token)));
+                tab("Conciertos", new ConciertosPane(client, token)),
+                tab("Ventas", new VentaPane(client, token)));
         setCenter(tabs);
     }
 
