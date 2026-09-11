@@ -1,7 +1,13 @@
 import express from 'express';
 import { pool } from './db/pool.js';
 import { createAuthRouter } from './routes/auth.js';
+import { createArtistaRouter } from './routes/artistas.js';
+import { createLocalidadRouter } from './routes/localidades.js';
+import { createConciertoRouter } from './routes/conciertos.js';
 import { createUserRepository } from './repositories/users.js';
+import { createArtistaRepository } from './repositories/artistas.js';
+import { createLocalidadRepository } from './repositories/localidades.js';
+import { createConciertoRepository } from './repositories/conciertos.js';
 
 /**
  * Builds the Express application. Kept separate from server startup so tests can
@@ -9,6 +15,9 @@ import { createUserRepository } from './repositories/users.js';
  */
 export function createApp({
   userRepository = createUserRepository(pool),
+  artistaRepository = createArtistaRepository(pool),
+  localidadRepository = createLocalidadRepository(pool),
+  conciertoRepository = createConciertoRepository(pool),
   jwtSecret = process.env.JWT_SECRET,
 } = {}) {
   const app = express();
@@ -23,6 +32,12 @@ export function createApp({
   });
 
   app.use('/auth', createAuthRouter({ userRepository, jwtSecret }));
+  app.use('/artistas', createArtistaRouter({ artistaRepository, jwtSecret }));
+  app.use('/localidades', createLocalidadRouter({ localidadRepository, jwtSecret }));
+  app.use(
+    '/conciertos',
+    createConciertoRouter({ conciertoRepository, artistaRepository, jwtSecret }),
+  );
 
   return app;
 }

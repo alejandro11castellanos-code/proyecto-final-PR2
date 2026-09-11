@@ -17,6 +17,20 @@ Todas las respuestas son JSON. Salvo login y `/health`, cada endpoint exige
 | GET    | `/health` | Estado del servicio   | —   | 0 ✅ |
 | POST   | `/auth/login` | Inicia sesión y devuelve un JWT | — | 1 ✅ |
 | GET    | `/auth/me` | Devuelve el usuario autenticado | * | 1 ✅ |
+| GET    | `/artistas` | Lista artistas | * | 2 ✅ |
+| GET    | `/artistas/:id` | Detalle de un artista | * | 2 ✅ |
+| POST   | `/artistas` | Crea un artista | administrador | 2 ✅ |
+| PUT    | `/artistas/:id` | Edita un artista | administrador | 2 ✅ |
+| DELETE | `/artistas/:id` | Elimina un artista | administrador | 2 ✅ |
+| GET    | `/localidades` | Lista localidades | * | 2 ✅ |
+| POST   | `/localidades` | Crea una localidad | administrador | 2 ✅ |
+| PUT    | `/localidades/:id` | Edita una localidad | administrador | 2 ✅ |
+| DELETE | `/localidades/:id` | Elimina una localidad | administrador | 2 ✅ |
+| GET    | `/conciertos` | Lista conciertos (con nombre de artista) | * | 2 ✅ |
+| GET    | `/conciertos/:id` | Detalle de un concierto | * | 2 ✅ |
+| POST   | `/conciertos` | Crea un concierto | administrador | 2 ✅ |
+| PUT    | `/conciertos/:id` | Edita un concierto (requiere `estado`) | administrador | 2 ✅ |
+| DELETE | `/conciertos/:id` | Elimina un concierto | administrador | 2 ✅ |
 
 ## Fase 1 — Autenticación
 
@@ -65,17 +79,44 @@ Respuesta `200`:
 
 Un token ausente, inválido o perteneciente a un usuario eliminado responde `401`.
 
+## Fase 2 — Catálogo
+
+Lectura (`GET`) abierta a cualquier rol autenticado — el vendedor la necesita
+para armar la venta. Escritura (`POST`/`PUT`/`DELETE`) exclusiva de
+`administrador`; un vendedor recibe `403`.
+
+### Artistas
+
+`POST /artistas` y `PUT /artistas/:id` exigen `nombre_artistico` y
+`genero_musical`; `pais_origen` es opcional. `DELETE` responde `409` si el
+artista tiene conciertos asociados (`No se puede eliminar: el artista tiene
+conciertos asociados.`).
+
+### Localidades
+
+`POST /localidades` y `PUT /localidades/:id` exigen `nombre` (único). Un
+nombre repetido responde `409`. `DELETE` responde `409` si la localidad tiene
+inventario asociado.
+
+### Conciertos
+
+`POST /conciertos` exige `id_artista` (debe existir), `titulo_evento`,
+`fecha_concierto` (ISO 8601) y `recinto`; `estado` es opcional y por defecto
+queda `programado`. `PUT /conciertos/:id` además exige `estado` de forma
+explícita (`programado` | `activo` | `finalizado` | `cancelado`). `DELETE`
+responde `409` si el concierto tiene inventario o ventas asociadas.
+
+```json
+{
+  "id_artista": 1,
+  "titulo_evento": "Gira Aniversario 2026",
+  "fecha_concierto": "2026-11-15T20:00:00Z",
+  "recinto": "Gran Sala Efraín Recinos",
+  "estado": "activo"
+}
+```
+
 ## Endpoints planificados
-
-### Fase 2 — Catálogo (administrador)
-
-| Método | Ruta                  | Descripción                     |
-|--------|-----------------------|---------------------------------|
-| GET/POST | `/artistas`         | Listar / crear artistas         |
-| PUT/DELETE | `/artistas/:id`   | Editar / eliminar artista       |
-| GET/POST | `/conciertos`       | Listar / crear conciertos       |
-| PUT/DELETE | `/conciertos/:id` | Editar / eliminar concierto     |
-| GET/POST | `/localidades`      | Listar / crear localidades      |
 
 ### Fase 3 — Inventario y disponibilidad
 
