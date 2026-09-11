@@ -83,6 +83,9 @@ public final class VentaPane extends BorderPane {
                 previewPanel.limpiar();
             }
         });
+        // Un concierto pudo crearse (o su aforo asignarse) en otra pestaña
+        // después de armar esta pantalla.
+        conciertoCombo.setOnShowing(event -> cargarConciertos());
 
         VBox box = new VBox(8, new Label("Concierto"), conciertoCombo);
         box.setPadding(new Insets(0, 0, 12, 0));

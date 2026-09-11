@@ -76,6 +76,9 @@ public final class InventarioPane extends BorderPane {
                 items.clear();
             }
         });
+        // Otra pestaña pudo crear un concierto nuevo después de que esta se
+        // armó; se refresca justo antes de desplegar, no solo al abrir la vista.
+        conciertoCombo.setOnShowing(event -> cargarConciertos());
 
         VBox box = new VBox(8, new Label("Concierto"), conciertoCombo);
         box.setPadding(new Insets(0, 0, 12, 0));
@@ -115,6 +118,7 @@ public final class InventarioPane extends BorderPane {
                 return localidadCombo.getValue();
             }
         });
+        localidadCombo.setOnShowing(event -> cargarLocalidades());
         precioField.setPromptText("Precio (ej. 450.00)");
         cantidadField.setPromptText("Cupo total");
 
