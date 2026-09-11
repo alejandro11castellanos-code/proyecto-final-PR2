@@ -31,29 +31,51 @@ public final class PreviewClient {
         return new PreviewClient(HttpClient.newHttpClient());
     }
 
-    /** URL de un preview de audio para el artista, o {@code null} si no se encontró en ninguna fuente. */
-    public String buscarPreview(String nombreArtista) {
-        String deItunes = buscarEnItunes(nombreArtista);
+    /** Adelanto encontrado para un artista, o {@code null} si no aparece en ninguna fuente. */
+    public record Preview(String tituloCancion, String nombreArtista, String imagenUrl, String previewUrl) {
+    }
+
+    public Preview buscarPreview(String nombreArtista) {
+        Preview deItunes = buscarEnItunes(nombreArtista);
         return deItunes != null ? deItunes : buscarEnDeezer(nombreArtista);
     }
 
-    private String buscarEnItunes(String nombreArtista) {
+    private Preview buscarEnItunes(String nombreArtista) {
         URI uri = URI.create("https://itunes.apple.com/search?term=" + codificar(nombreArtista)
                 + "&entity=song&limit=1");
         try {
-            JsonNode resultados = obtenerJson(uri).path("results");
-            return textoONull(primerElemento(resultados), "previewUrl");
+            JsonNode item = primerElemento(obtenerJson(uri).path("results"));
+            String url = textoONull(item, "previewUrl");
+            if (url == null) {
+                return null;
+            }
+            String artwork = textoONull(item, "artworkUrl100");
+            return new Preview(
+                    textoONull(item, "trackName"),
+                    textoONull(item, "artistName"),
+                    // La miniatura viene en 100x100; se pide una versión más grande del mismo asset.
+                    artwork == null ? null : artwork.replace("100x100bb", "300x300bb"),
+                    url);
         } catch (Exception ignored) {
             // Se intenta con Deezer a continuación.
             return null;
         }
     }
 
-    private String buscarEnDeezer(String nombreArtista) {
+    private Preview buscarEnDeezer(String nombreArtista) {
         URI uri = URI.create("https://api.deezer.com/search?q=" + codificar(nombreArtista) + "&limit=1");
         try {
-            JsonNode datos = obtenerJson(uri).path("data");
-            return textoONull(primerElemento(datos), "preview");
+            JsonNode item = primerElemento(obtenerJson(uri).path("data"));
+            String url = textoONull(item, "preview");
+            if (url == null) {
+                return null;
+            }
+            JsonNode artista = item.path("artist");
+            return new Preview(
+                    textoONull(item, "title"),
+                    textoONull(artista, "name"),
+                    textoONull(artista, "picture_medium"),
+                    url);
         } catch (Exception ignored) {
             return null;
         }

@@ -42,9 +42,7 @@ public final class ConciertosPane extends BorderPane {
     private final Label status = new Label();
     private final Button guardarButton = new Button("Guardar");
     private final Button eliminarButton = new Button("Eliminar");
-    private final Button escucharButton = new Button("▶ Escuchar");
-    private final PreviewClient previewClient = PreviewClient.crear();
-    private final PreviewPlayer previewPlayer = new PreviewPlayer();
+    private final PreviewPanel previewPanel = new PreviewPanel();
     private Concierto seleccionado;
 
     public ConciertosPane(CatalogClient client, String token) {
@@ -52,6 +50,7 @@ public final class ConciertosPane extends BorderPane {
         this.token = token;
         setPadding(new Insets(16));
         setCenter(buildTable());
+        setRight(previewPanel);
         setBottom(buildForm());
         cargarArtistas();
         cargar();
@@ -102,10 +101,8 @@ public final class ConciertosPane extends BorderPane {
         guardarButton.setOnAction(event -> guardar());
         eliminarButton.setOnAction(event -> eliminar());
         eliminarButton.setDisable(true);
-        escucharButton.setOnAction(event -> alternarReproduccion());
-        escucharButton.setDisable(true);
 
-        HBox botones = new HBox(8, nuevoButton, guardarButton, eliminarButton, escucharButton);
+        HBox botones = new HBox(8, nuevoButton, guardarButton, eliminarButton);
         botones.setAlignment(Pos.CENTER_LEFT);
         status.setWrapText(true);
 
@@ -115,11 +112,10 @@ public final class ConciertosPane extends BorderPane {
     }
 
     private void seleccionar(Concierto concierto) {
-        detenerReproduccion();
         seleccionado = concierto;
         eliminarButton.setDisable(concierto == null);
-        escucharButton.setDisable(concierto == null);
         if (concierto == null) {
+            previewPanel.limpiar();
             return;
         }
         artistas.stream()
@@ -130,10 +126,11 @@ public final class ConciertosPane extends BorderPane {
         fechaField.setText(concierto.fechaConcierto());
         recintoField.setText(concierto.recinto());
         estadoCombo.setValue(concierto.estado());
+        previewPanel.cargarParaArtista(concierto.nombreArtistico());
     }
 
     private void limpiarSeleccion() {
-        detenerReproduccion();
+        previewPanel.limpiar();
         table.getSelectionModel().clearSelection();
         seleccionado = null;
         artistaCombo.setValue(null);
@@ -142,48 +139,7 @@ public final class ConciertosPane extends BorderPane {
         recintoField.clear();
         estadoCombo.setValue(null);
         eliminarButton.setDisable(true);
-        escucharButton.setDisable(true);
         status.setText("");
-    }
-
-    private void detenerReproduccion() {
-        previewPlayer.detener();
-        escucharButton.setText("▶ Escuchar");
-    }
-
-    private void alternarReproduccion() {
-        if (previewPlayer.estaReproduciendo()) {
-            detenerReproduccion();
-            status.setText("");
-            return;
-        }
-        if (seleccionado == null) {
-            return;
-        }
-
-        String nombreArtista = seleccionado.nombreArtistico();
-        escucharButton.setDisable(true);
-        status.setText("Buscando un adelanto de " + nombreArtista + "...");
-
-        Async.run(
-                () -> previewClient.buscarPreview(nombreArtista),
-                url -> {
-                    escucharButton.setDisable(false);
-                    if (url == null) {
-                        status.setText("No se encontró un adelanto de " + nombreArtista + ".");
-                        return;
-                    }
-                    status.setText("Reproduciendo un adelanto de " + nombreArtista + "...");
-                    escucharButton.setText("■ Detener");
-                    previewPlayer.reproducir(url, () -> {
-                        escucharButton.setText("▶ Escuchar");
-                        status.setText("");
-                    });
-                },
-                error -> {
-                    escucharButton.setDisable(false);
-                    status.setText(error);
-                });
     }
 
     private void cargarArtistas() {
