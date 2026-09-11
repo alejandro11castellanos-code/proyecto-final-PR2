@@ -240,6 +240,7 @@ public final class VentaPane extends BorderPane {
                     if (conciertoActual != null) {
                         cargarDisponibilidad(conciertoActual.idConcierto());
                     }
+                    BoletosDialog.mostrar(getScene().getWindow(), client, token, venta.idVenta());
                 },
                 error -> {
                     confirmarButton.setDisable(false);
