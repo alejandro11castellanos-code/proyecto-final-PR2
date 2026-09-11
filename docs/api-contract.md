@@ -158,18 +158,15 @@ la base de datos rechaza el cambio (`CHECK`) y la API responde `400`.
 }
 ```
 
-## Endpoints planificados
+## Fase 4 — Venta transaccional
 
-### Fase 4 — Venta transaccional
-
-| Método | Ruta        | Descripción                                                    |
-|--------|-------------|---------------------------------------------------------------|
-| POST   | `/ventas`   | Registra una venta con múltiples ítems en una sola transacción |
-| GET    | `/ventas/:id` | Detalle de una venta                                         |
-
-Cuerpo tentativo de `POST /ventas`:
+| Método | Ruta          | Descripción                                                    | Rol |
+|--------|---------------|-----------------------------------------------------------------|-----|
+| POST   | `/ventas`     | Registra una venta con uno o más ítems en una sola transacción  | *   |
+| GET    | `/ventas/:id` | Detalle de una venta, con localidad y evento de cada ítem        | *   |
 
 ```json
+// POST /ventas
 {
   "items": [
     { "id_inventario": 1, "cantidad": 2 },
@@ -178,10 +175,45 @@ Cuerpo tentativo de `POST /ventas`:
 }
 ```
 
-Reglas: la transacción bloquea cada fila de `inventario_boletos`
-(`SELECT ... FOR UPDATE`), valida `cantidad_disponible >= cantidad`, descuenta
-el inventario, inserta `ventas` + `detalle_ventas` y confirma. Si algún ítem
-falla, se revierte todo.
+`id_vendedor` sale del token, no del cuerpo. Cada `id_inventario` debe
+aparecer una sola vez (cantidades repetidas se rechazan con `400`, para que
+el cliente las agrupe). La transacción, en orden:
+
+1. Bloquea todas las filas de `inventario_boletos` involucradas
+   (`SELECT ... FOR UPDATE`, en orden de `id_inventario` para evitar
+   deadlocks entre ventas concurrentes que comparten localidades).
+2. Valida `cantidad_disponible >= cantidad` para **todos** los ítems antes de
+   aplicar **ninguno** — si un ítem no existe (`404`) o no alcanza (`409`),
+   la venta completa se revierte, incluidos los ítems que sí tenían stock.
+3. Descuenta el inventario, inserta `ventas` + `detalle_ventas` y confirma.
+
+Verificado con dos ventas concurrentes por el mismo cupo limitado: la
+segunda ve la disponibilidad real que dejó la primera y nunca se vende de
+más (`cantidad_disponible` no baja de `0`).
+
+```json
+// respuesta 201 / 200 de GET
+{
+  "id_venta": 1,
+  "id_vendedor": 2,
+  "fecha_venta": "2026-09-11T04:00:04.824Z",
+  "total_venta": "300.00",
+  "items": [
+    {
+      "id_detalle": 1,
+      "id_inventario": 7,
+      "cantidad": 3,
+      "precio_unitario": "100.00",
+      "subtotal": "300.00",
+      "nombre_localidad": "Platea",
+      "id_concierto": 2,
+      "titulo_evento": "Noche Acustica"
+    }
+  ]
+}
+```
+
+## Endpoints planificados
 
 ### Fases 5-6 — QR/correo y reportes
 
