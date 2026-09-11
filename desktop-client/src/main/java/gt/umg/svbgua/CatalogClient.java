@@ -36,6 +36,31 @@ public final class CatalogClient {
         return new CatalogClient(HttpClient.newHttpClient(), URI.create(apiUrl));
     }
 
+    // ---- Usuarios ----
+
+    public List<Usuario> listUsuarios(String token) {
+        return getList("/usuarios", token, Usuario[].class);
+    }
+
+    public Usuario createUsuario(
+            String token, String nombreUsuario, String contrasena, String nombreCompleto, String rol) {
+        return send("POST", "/usuarios", token,
+                new UsuarioCreateRequest(nombreUsuario, contrasena, nombreCompleto, rol), Usuario.class);
+    }
+
+    public Usuario updateUsuario(String token, int id, String nombreCompleto, String rol) {
+        return send("PUT", "/usuarios/" + id, token, new UsuarioUpdateRequest(nombreCompleto, rol), Usuario.class);
+    }
+
+    public void restablecerContrasena(String token, int id, String contrasena) {
+        send("PUT", "/usuarios/" + id + "/contrasena", token,
+                new ContrasenaRequest(contrasena), ActualizadoResponse.class);
+    }
+
+    public void deleteUsuario(String token, int id) {
+        delete("/usuarios/" + id, token);
+    }
+
     // ---- Artistas ----
 
     public List<Artista> listArtistas(String token) {
@@ -259,6 +284,22 @@ public final class CatalogClient {
     }
 
     private record VentaRequest(List<ItemVenta> items) {
+    }
+
+    public record Usuario(int idUsuario, String nombreUsuario, String nombreCompleto, String rol,
+            String fechaCreacion) {
+    }
+
+    private record UsuarioCreateRequest(String nombreUsuario, String contrasena, String nombreCompleto, String rol) {
+    }
+
+    private record UsuarioUpdateRequest(String nombreCompleto, String rol) {
+    }
+
+    private record ContrasenaRequest(String contrasena) {
+    }
+
+    private record ActualizadoResponse(boolean actualizado) {
     }
 
     public static final class ApiException extends RuntimeException {
