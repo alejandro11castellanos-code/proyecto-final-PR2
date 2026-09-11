@@ -109,6 +109,21 @@ public final class CatalogClient {
         return send("POST", "/ventas", token, new VentaRequest(items), Venta.class);
     }
 
+    // GET /ventas/:id/boletos no devuelve un array plano sino
+    // { id_venta, boletos: [...] }, así que no puede pasar por getList().
+    public List<Boleto> listBoletos(String token, int idVenta) {
+        HttpResponse<String> response = execute(newRequest("GET", "/ventas/" + idVenta + "/boletos", token, null));
+        try {
+            return mapper.readValue(response.body(), BoletosResponse.class).boletos();
+        } catch (IOException error) {
+            throw new ApiException("La respuesta del servidor no es válida.", error);
+        }
+    }
+
+    public void enviarBoletos(String token, int idVenta, String email) {
+        send("POST", "/ventas/" + idVenta + "/enviar", token, new EnviarRequest(email), EnviarResponse.class);
+    }
+
     // ---- infraestructura HTTP ----
 
     private <T> List<T> getList(String path, String token, Class<T[]> arrayType) {
@@ -197,6 +212,19 @@ public final class CatalogClient {
     }
 
     public record Venta(int idVenta, int idVendedor, String fechaVenta, String totalVenta) {
+    }
+
+    public record Boleto(int idDetalle, String tituloEvento, String nombreLocalidad, int cantidad,
+            String codigo, String qr) {
+    }
+
+    private record BoletosResponse(int idVenta, List<Boleto> boletos) {
+    }
+
+    private record EnviarRequest(String email) {
+    }
+
+    private record EnviarResponse(boolean enviado, String destinatario) {
     }
 
     private record ArtistaRequest(String nombreArtistico, String generoMusical, String paisOrigen) {
