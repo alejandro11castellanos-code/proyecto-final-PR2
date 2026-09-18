@@ -20,45 +20,47 @@ Cliente JavaFX  ──HTTP/REST──▶  API Node.js + Express  ──▶  Post
 | `desktop-client/`| Cliente de escritorio JavaFX (Maven)                   |
 | `docs/`          | Contrato de API y documentación de diseño              |
 
-## Puesta en marcha (Docker, recomendado para desarrollo local)
+## Puesta en marcha
 
-Levanta Postgres + backend con hot-reload. Requiere Docker Desktop corriendo.
+La base de datos vive en **Neon** (no hay Postgres local en Docker — lo usamos
+al principio y lo dimos de baja al migrar). Cada quien en el equipo necesita
+su propio `backend/.env` con la `DATABASE_URL` de Neon; no se versiona (está
+en `.gitignore`).
 
-```bash
-docker compose up -d --build   # primera vez o tras cambiar el Dockerfile
-docker compose exec backend npm run db:seed   # solo la primera vez
-curl http://localhost:3000/health
-```
-
-- El esquema (`database/schema.sql`) se aplica solo, automáticamente, la primera
-  vez que se crea el volumen de datos.
-- El backend corre con `node --watch`: los cambios en `backend/` se reflejan sin
-  reconstruir la imagen.
-- Postgres queda expuesto en `localhost:5432` (`svb_gua`/`svb_gua_dev`) para
-  conectarte con TablePlus, DBeaver, etc.
-- Para empezar de cero (borra los datos): `docker compose down -v`.
-- Logs: `docker compose logs -f backend`.
-
-## Puesta en marcha (sin Docker, contra Neon/Supabase)
-
-### 1. Base de datos
-
-Crear una base PostgreSQL en Neon o Supabase y exportar la URL de conexión:
+### 1. Base de datos (una sola vez, quien administre el proyecto en Neon)
 
 ```bash
-export DATABASE_URL="postgresql://usuario:password@host/basededatos"
-psql "$DATABASE_URL" -f database/schema.sql
-psql "$DATABASE_URL" -f database/seed.sql
+export NEON_URL="postgresql://usuario:password@host/basededatos?sslmode=require&channel_binding=require"
+
+# El esquema se puede aplicar con psql...
+psql "$NEON_URL" -f database/schema.sql
+
+# ...pero el seed NO: database/seed.sql trae placeholders de contraseña
+# (__BCRYPT_ADMIN__, __BCRYPT_VENDEDOR__) que este script reemplaza por
+# hashes bcrypt reales antes de insertar. psql solo, sin pasar por Node,
+# insertaría esos placeholders tal cual y nadie podría loguearse.
+cd backend
+DATABASE_URL="$NEON_URL" node scripts/seed.js
+cd ..
 ```
 
 ### 2. Backend
 
 ```bash
 cd backend
-cp env.example .env    # completar DATABASE_URL y JWT_SECRET
+cp env.example .env    # completar DATABASE_URL (la de Neon) y JWT_SECRET
 npm install
 npm test
 npm run dev            # http://localhost:3000/health
+```
+
+**Alternativa con Docker** (por si no querés instalar Node localmente): el
+`docker-compose.yml` solo corre el backend, leyendo `backend/.env` — la base
+sigue siendo Neon.
+
+```bash
+docker compose up -d --build
+curl http://localhost:3000/health
 ```
 
 ### 3. Cliente de escritorio
