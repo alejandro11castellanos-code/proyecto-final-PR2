@@ -91,6 +91,12 @@ mvn javafx:run
 
 ## Extras (fuera del alcance original)
 
+- **Historial de ventas:** pestaña "Historial" (admin, con filtro de
+  vendedor y concierto) y "Mis ventas" (vendedor, solo las suyas). "Ver
+  boletos" reabre el mismo diálogo de QR/correo de la fase 5 — sirve para
+  reimprimir o reenviar los boletos de una venta pasada sin pantalla nueva.
+
+
 - **Alerta de últimos boletos:** la columna "Disponibles" en Aforo y en el
   punto de venta resalta en naranja "¡Últimos N!" cuando quedan 10 boletos
   o menos de una localidad, y en rojo "AGOTADO" cuando llega a 0. Es un
