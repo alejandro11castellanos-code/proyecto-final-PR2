@@ -91,6 +91,16 @@ mvn javafx:run
 
 ## Extras (fuera del alcance original)
 
+- **Simulador de pago con tarjeta:** al confirmar una venta en el punto de
+  venta, se abre un diálogo que pide número de tarjeta, nombre, vencimiento
+  y CVV; valida todo localmente (algoritmo de Luhn para el número, mes/año
+  no vencido, CVV de 3-4 dígitos) y "aprueba" el pago tras una espera falsa,
+  sin conectarse a ningún banco ni pasarela real. Es intencional: el
+  enunciado excluye explícitamente integrar una pasarela de pago (ver
+  sección "No Incluye" del documento original), así que esto se queda
+  100% local — solo agrega el paso visual de cobro que le faltaba a la demo.
+
+
 - **Adelanto musical del artista:** en `Conciertos` y en el punto de venta,
   un panel muestra imagen + nombre de artista + canción, con botón
   "▶ Escuchar" para un adelanto de ~30s. Usa la iTunes Search API como
