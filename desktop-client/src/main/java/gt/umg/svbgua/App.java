@@ -9,6 +9,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -105,9 +107,15 @@ public class App extends Application {
         barra.setAlignment(Pos.CENTER_LEFT);
         barra.setPadding(new Insets(16, 16, 0, 16));
 
+        Tab ventaTab = new Tab("Vender", new VentaPane(catalogClient, token));
+        ventaTab.setClosable(false);
+        Tab historialTab = new Tab("Mis ventas", new HistorialPane(catalogClient, token, false));
+        historialTab.setClosable(false);
+        TabPane tabs = new TabPane(ventaTab, historialTab);
+
         BorderPane root = new BorderPane();
         root.setTop(barra);
-        root.setCenter(new VentaPane(catalogClient, token));
+        root.setCenter(tabs);
 
         stage.setScene(new Scene(root, 900, 620));
         stage.setTitle("SVB-GUA — Punto de venta");
