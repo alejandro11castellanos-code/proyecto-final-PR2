@@ -1,20 +1,34 @@
 package gt.umg.svbgua;
 
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 
 /** Panel de administración: pestañas de artistas, localidades y conciertos. */
 public final class AdminView extends BorderPane {
 
-    public AdminView(CatalogClient client, String token, String nombreCompleto) {
+    public AdminView(CatalogClient client, String token, String nombreCompleto, Runnable cerrarSesion) {
         Label header = new Label("Panel de administración — " + nombreCompleto);
         header.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
-        header.setPadding(new Insets(16, 16, 0, 16));
-        setTop(header);
+
+        Region espaciador = new Region();
+        HBox.setHgrow(espaciador, Priority.ALWAYS);
+
+        Button cerrarSesionButton = new Button("Cerrar sesión");
+        cerrarSesionButton.setOnAction(event -> cerrarSesion.run());
+
+        HBox barra = new HBox(header, espaciador, cerrarSesionButton);
+        barra.setAlignment(Pos.CENTER_LEFT);
+        barra.setPadding(new Insets(16, 16, 0, 16));
+        setTop(barra);
 
         TabPane tabs = new TabPane(
                 tab("Usuarios", new UsuariosPane(client, token)),
