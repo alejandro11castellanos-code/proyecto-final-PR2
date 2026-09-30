@@ -38,7 +38,7 @@ public final class AdminView extends BorderPane {
                 tab("Aforo", new InventarioPane(client, token)),
                 tab("Ventas", new VentaPane(client, token)),
                 tab("Historial", new HistorialPane(client, token, true)),
-                tab("Reportes", new ReportesPane(client, token)));
+                tab("Reportes", new ReportesPane(client, token, nombreCompleto)));
         setCenter(tabs);
     }
 

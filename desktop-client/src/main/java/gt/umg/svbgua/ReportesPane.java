@@ -7,6 +7,8 @@ import gt.umg.svbgua.CatalogClient.VentaPorConcierto;
 import gt.umg.svbgua.CatalogClient.VentaPorDia;
 import gt.umg.svbgua.CatalogClient.VentaPorLocalidad;
 import gt.umg.svbgua.CatalogClient.VentaPorVendedor;
+import java.io.File;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import javafx.collections.FXCollections;
@@ -27,7 +29,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.stage.Window;
 import javafx.util.Duration;
+import net.sf.jasperreports.engine.JRException;
 
 /**
  * Dashboard de reportería en vivo: gráficas nativas de JavaFX consumiendo
@@ -43,16 +48,20 @@ public final class ReportesPane extends BorderPane {
 
     private final CatalogClient client;
     private final String token;
+    private final String nombreCompleto;
 
     private final Label kpiIngresos = new Label();
     private final Label kpiBoletos = new Label();
     private final Label kpiPromedio = new Label();
     private final Label status = new Label();
     private final VBox contenido = new VBox(20);
+    private final Button exportarButton = new Button("Exportar PDF");
+    private Dashboard ultimoDashboard;
 
-    public ReportesPane(CatalogClient client, String token) {
+    public ReportesPane(CatalogClient client, String token, String nombreCompleto) {
         this.client = client;
         this.token = token;
+        this.nombreCompleto = nombreCompleto;
         setPadding(new Insets(16));
         setTop(buildEncabezado());
 
@@ -68,11 +77,14 @@ public final class ReportesPane extends BorderPane {
         Button actualizarButton = new Button("Actualizar");
         actualizarButton.setOnAction(event -> cargar());
 
+        exportarButton.setDisable(true);
+        exportarButton.setOnAction(event -> exportarPdf());
+
         HBox kpis = new HBox(24, tarjetaKpi("Ingresos totales", kpiIngresos),
                 tarjetaKpi("Boletos vendidos", kpiBoletos), tarjetaKpi("Precio promedio", kpiPromedio));
         kpis.setAlignment(Pos.CENTER_LEFT);
 
-        HBox fila = new HBox(16, kpis, actualizarButton);
+        HBox fila = new HBox(16, kpis, actualizarButton, exportarButton);
         fila.setAlignment(Pos.CENTER_LEFT);
 
         status.setWrapText(true);
@@ -98,8 +110,47 @@ public final class ReportesPane extends BorderPane {
                 error -> status.setText(error));
     }
 
+    private void exportarPdf() {
+        if (ultimoDashboard == null) {
+            return;
+        }
+
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Guardar reporte de ventas");
+        chooser.setInitialFileName("reporte-ventas-" + LocalDate.now() + ".pdf");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF", "*.pdf"));
+        Window ventana = getScene() == null ? null : getScene().getWindow();
+        File destino = chooser.showSaveDialog(ventana);
+        if (destino == null) {
+            return;
+        }
+
+        Dashboard dashboard = ultimoDashboard;
+        exportarButton.setDisable(true);
+        status.setText("Generando PDF...");
+        Async.run(
+                () -> {
+                    try {
+                        ReporteVentasService.generar(dashboard, nombreCompleto, destino);
+                        return destino;
+                    } catch (JRException error) {
+                        throw new RuntimeException(error.getMessage(), error);
+                    }
+                },
+                archivo -> {
+                    exportarButton.setDisable(false);
+                    status.setText("PDF guardado en " + archivo.getAbsolutePath());
+                },
+                error -> {
+                    exportarButton.setDisable(false);
+                    status.setText(error);
+                });
+    }
+
     private void mostrar(Dashboard dashboard) {
         status.setText("");
+        ultimoDashboard = dashboard;
+        exportarButton.setDisable(false);
         kpiIngresos.setText(formatearMoneda(dashboard.resumen().ingresosTotales()));
         kpiBoletos.setText(String.valueOf(dashboard.resumen().boletosVendidos()));
         kpiPromedio.setText(formatearMoneda(dashboard.resumen().precioPromedio()));

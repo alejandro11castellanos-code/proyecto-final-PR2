@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="por_artista" pageWidth="595" pageHeight="842" columnWidth="535" leftMargin="30" rightMargin="30" topMargin="30" bottomMargin="30">
+  <field name="artista" class="java.lang.String"/>
+  <field name="ingresos" class="java.lang.String"/>
+  <field name="boletos" class="java.lang.String"/>
+  <title>
+    <band height="28">
+      <staticText>
+        <reportElement x="0" y="0" width="535" height="24"/>
+        <textElement><font size="15" isBold="true"/></textElement>
+        <text><![CDATA[Ventas por artista]]></text>
+      </staticText>
+    </band>
+  </title>
+  <columnHeader>
+    <band height="20">
+      <staticText>
+        <reportElement x="0" y="0" width="250" height="20" backcolor="#EEEEEE" mode="Opaque"/>
+        <box><pen lineWidth="0.5"/></box>
+        <textElement><font isBold="true" size="9"/></textElement>
+        <text><![CDATA[Artista]]></text>
+      </staticText>
+      <staticText>
+        <reportElement x="250" y="0" width="150" height="20" backcolor="#EEEEEE" mode="Opaque"/>
+        <box><pen lineWidth="0.5"/></box>
+        <textElement textAlignment="Right"><font isBold="true" size="9"/></textElement>
+        <text><![CDATA[Ingresos]]></text>
+      </staticText>
+      <staticText>
+        <reportElement x="400" y="0" width="135" height="20" backcolor="#EEEEEE" mode="Opaque"/>
+        <box><pen lineWidth="0.5"/></box>
+        <textElement textAlignment="Right"><font isBold="true" size="9"/></textElement>
+        <text><![CDATA[Boletos]]></text>
+      </staticText>
+    </band>
+  </columnHeader>
+  <detail>
+    <band height="18">
+      <textField>
+        <reportElement x="0" y="0" width="250" height="18"/>
+        <box><pen lineWidth="0.25" lineColor="#CCCCCC"/></box>
+        <textElement><font size="9"/></textElement>
+        <textFieldExpression><![CDATA[$F{artista}]]></textFieldExpression>
+      </textField>
+      <textField>
+        <reportElement x="250" y="0" width="150" height="18"/>
+        <box><pen lineWidth="0.25" lineColor="#CCCCCC"/></box>
+        <textElement textAlignment="Right"><font size="9"/></textElement>
+        <textFieldExpression><![CDATA[$F{ingresos}]]></textFieldExpression>
+      </textField>
+      <textField>
+        <reportElement x="400" y="0" width="135" height="18"/>
+        <box><pen lineWidth="0.25" lineColor="#CCCCCC"/></box>
+        <textElement textAlignment="Right"><font size="9"/></textElement>
+        <textFieldExpression><![CDATA[$F{boletos}]]></textFieldExpression>
+      </textField>
+    </band>
+  </detail>
+  <noData>
+    <band height="20">
+      <staticText>
+        <reportElement x="0" y="0" width="535" height="20"/>
+        <textElement><font size="9" isItalic="true"/></textElement>
+        <text><![CDATA[Sin datos.]]></text>
+      </staticText>
+    </band>
+  </noData>
+</jasperReport>
