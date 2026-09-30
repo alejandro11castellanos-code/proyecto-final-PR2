@@ -22,11 +22,13 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 
 /**
  * Dashboard de reportería en vivo: gráficas nativas de JavaFX consumiendo
@@ -119,7 +121,10 @@ public final class ReportesPane extends BorderPane {
         BarChart<String, Number> chart = nuevoBarChart("Ingresos (Q)");
         XYChart.Series<String, Number> serie = new XYChart.Series<>();
         for (VentaPorConcierto fila : filas) {
-            serie.getData().add(new XYChart.Data<>(fila.tituloEvento(), Double.parseDouble(fila.ingresos())));
+            XYChart.Data<String, Number> punto = new XYChart.Data<>(fila.tituloEvento(), Double.parseDouble(fila.ingresos()));
+            instalarTooltip(punto, fila.tituloEvento() + "\n" + formatearMoneda(fila.ingresos())
+                    + " · " + fila.boletos() + " boletos");
+            serie.getData().add(punto);
         }
         chart.getData().add(serie);
         return chart;
@@ -129,7 +134,11 @@ public final class ReportesPane extends BorderPane {
         BarChart<String, Number> chart = nuevoBarChart("Ingresos (Q)");
         XYChart.Series<String, Number> serie = new XYChart.Series<>();
         for (VentaPorArtista fila : filas) {
-            serie.getData().add(new XYChart.Data<>(fila.nombreArtistico(), Double.parseDouble(fila.ingresos())));
+            XYChart.Data<String, Number> punto =
+                    new XYChart.Data<>(fila.nombreArtistico(), Double.parseDouble(fila.ingresos()));
+            instalarTooltip(punto, fila.nombreArtistico() + "\n" + formatearMoneda(fila.ingresos())
+                    + " · " + fila.boletos() + " boletos");
+            serie.getData().add(punto);
         }
         chart.getData().add(serie);
         return chart;
@@ -140,7 +149,10 @@ public final class ReportesPane extends BorderPane {
         XYChart.Series<String, Number> serie = new XYChart.Series<>();
         for (VentaPorVendedor fila : filas) {
             String etiqueta = fila.nombreCompleto() + ("administrador".equals(fila.rol()) ? " (admin)" : "");
-            serie.getData().add(new XYChart.Data<>(etiqueta, Double.parseDouble(fila.ingresos())));
+            XYChart.Data<String, Number> punto = new XYChart.Data<>(etiqueta, Double.parseDouble(fila.ingresos()));
+            instalarTooltip(punto, etiqueta + "\n" + formatearMoneda(fila.ingresos())
+                    + " · " + fila.ventas() + " ventas");
+            serie.getData().add(punto);
         }
         chart.getData().add(serie);
         return chart;
@@ -156,20 +168,55 @@ public final class ReportesPane extends BorderPane {
 
         XYChart.Series<String, Number> serie = new XYChart.Series<>();
         for (VentaPorDia fila : filas) {
-            serie.getData().add(new XYChart.Data<>(fila.dia(), Double.parseDouble(fila.ingresos())));
+            XYChart.Data<String, Number> punto = new XYChart.Data<>(fila.dia(), Double.parseDouble(fila.ingresos()));
+            instalarTooltip(punto, fila.dia() + "\n" + formatearMoneda(fila.ingresos())
+                    + " · " + fila.boletos() + " boletos");
+            serie.getData().add(punto);
         }
         chart.getData().add(serie);
         return chart;
     }
 
     private PieChart pieChartLocalidad(List<VentaPorLocalidad> filas) {
-        PieChart chart = new PieChart(FXCollections.observableArrayList(
-                filas.stream()
-                        .filter(fila -> fila.boletos() > 0)
-                        .map(fila -> new PieChart.Data(fila.nombre(), fila.boletos()))
-                        .toList()));
+        List<PieChart.Data> datos = filas.stream()
+                .filter(fila -> fila.boletos() > 0)
+                .map(fila -> new PieChart.Data(fila.nombre(), fila.boletos()))
+                .toList();
+        PieChart chart = new PieChart(FXCollections.observableArrayList(datos));
         chart.setPrefHeight(280);
+
+        for (PieChart.Data dato : datos) {
+            instalarTooltip(dato, dato.getName() + "\n" + (int) dato.getPieValue() + " boletos");
+        }
         return chart;
+    }
+
+    /** Instala un tooltip en el nodo de un punto/barra, esperando a que exista si todavía no se creó. */
+    private static void instalarTooltip(XYChart.Data<?, ?> punto, String texto) {
+        Tooltip tooltip = new Tooltip(texto);
+        tooltip.setShowDelay(Duration.millis(100));
+        if (punto.getNode() != null) {
+            Tooltip.install(punto.getNode(), tooltip);
+        }
+        punto.nodeProperty().addListener((obs, anterior, nuevo) -> {
+            if (nuevo != null) {
+                Tooltip.install(nuevo, tooltip);
+            }
+        });
+    }
+
+    /** Igual que arriba, pero para porciones de {@link PieChart}. */
+    private static void instalarTooltip(PieChart.Data porcion, String texto) {
+        Tooltip tooltip = new Tooltip(texto);
+        tooltip.setShowDelay(Duration.millis(100));
+        if (porcion.getNode() != null) {
+            Tooltip.install(porcion.getNode(), tooltip);
+        }
+        porcion.nodeProperty().addListener((obs, anterior, nuevo) -> {
+            if (nuevo != null) {
+                Tooltip.install(nuevo, tooltip);
+            }
+        });
     }
 
     private FlowPane ocupacionPane(List<Ocupacion> filas) {
