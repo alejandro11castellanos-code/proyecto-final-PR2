@@ -86,7 +86,7 @@ mvn javafx:run
 | 3    | Inventario y consulta de aforo en tiempo real              | ✅     |
 | 4    | Venta transaccional con múltiples boletos                  | ✅     |
 | 5    | Generación de QR y envío por correo                        | ✅     |
-| 6    | Reportes con JasperReports                                 | ⬜     |
+| 6    | Reportes (dashboard JavaFX + exportable con JasperReports) | 🟡 API lista; falta el dashboard JavaFX y el export PDF |
 | 7    | Empaquetado `.jar` y despliegue final                      | ⬜     |
 
 ## Extras (fuera del alcance original)
