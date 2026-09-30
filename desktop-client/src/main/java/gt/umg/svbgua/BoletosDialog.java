@@ -39,7 +39,7 @@ import javafx.util.Duration;
 public final class BoletosDialog {
 
     private static final double ANCHO_TICKET = 220;
-    private static final double ALTO_BANNER = 90;
+    private static final double ALTO_BANNER = 140;
 
     private BoletosDialog() {
     }
@@ -78,7 +78,7 @@ public final class BoletosDialog {
         root.setScaleX(0.94);
         root.setScaleY(0.94);
 
-        stage.setScene(new Scene(root, 320, 560));
+        stage.setScene(new Scene(root, 320, 610));
         stage.show();
 
         FadeTransition aparecer = new FadeTransition(Duration.millis(220), root);
