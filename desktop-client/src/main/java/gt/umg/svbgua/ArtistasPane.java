@@ -2,9 +2,11 @@ package gt.umg.svbgua;
 
 import gt.umg.svbgua.CatalogClient.Artista;
 import java.util.List;
+import java.util.Locale;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -14,6 +16,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 /** Pantalla de administración de artistas: tabla + formulario de alta/edición. */
@@ -22,7 +25,9 @@ public final class ArtistasPane extends BorderPane {
     private final CatalogClient client;
     private final String token;
     private final ObservableList<Artista> items = FXCollections.observableArrayList();
+    private final FilteredList<Artista> filtrado = new FilteredList<>(items, artista -> true);
     private final TableView<Artista> table = new TableView<>(items);
+    private final TextField buscarField = new TextField();
 
     private final TextField nombreField = new TextField();
     private final TextField generoField = new TextField();
@@ -36,9 +41,28 @@ public final class ArtistasPane extends BorderPane {
         this.client = client;
         this.token = token;
         setPadding(new Insets(16));
-        setCenter(buildTable());
+        setCenter(buildTablaConBuscador());
         setBottom(buildForm());
         cargar();
+    }
+
+    private VBox buildTablaConBuscador() {
+        buscarField.setPromptText("Buscar por nombre, género o país...");
+        buscarField.textProperty().addListener((obs, previo, actual) -> aplicarFiltro(actual));
+
+        TableView<Artista> tabla = buildTable();
+        VBox.setVgrow(tabla, Priority.ALWAYS);
+
+        VBox box = new VBox(8, buscarField, tabla);
+        return box;
+    }
+
+    private void aplicarFiltro(String texto) {
+        String buscado = texto == null ? "" : texto.trim().toLowerCase(Locale.ROOT);
+        filtrado.setPredicate(artista -> buscado.isEmpty()
+                || artista.nombreArtistico().toLowerCase(Locale.ROOT).contains(buscado)
+                || artista.generoMusical().toLowerCase(Locale.ROOT).contains(buscado)
+                || (artista.paisOrigen() != null && artista.paisOrigen().toLowerCase(Locale.ROOT).contains(buscado)));
     }
 
     private TableView<Artista> buildTable() {
@@ -54,6 +78,7 @@ public final class ArtistasPane extends BorderPane {
 
         table.getColumns().addAll(List.of(nombre, genero, pais));
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setItems(filtrado);
         table.getSelectionModel().selectedItemProperty().addListener((obs, previous, current) -> seleccionar(current));
         return table;
     }
