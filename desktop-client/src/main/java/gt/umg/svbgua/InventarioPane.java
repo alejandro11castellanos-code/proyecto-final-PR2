@@ -95,11 +95,12 @@ public final class InventarioPane extends BorderPane {
         TableColumn<Inventario, String> total = new TableColumn<>("Cupo total");
         total.setCellValueFactory(data -> new SimpleStringProperty(String.valueOf(data.getValue().cantidadTotal())));
 
-        TableColumn<Inventario, String> disponible = new TableColumn<>("Disponibles");
-        disponible.setCellValueFactory(
-                data -> new SimpleStringProperty(String.valueOf(data.getValue().cantidadDisponible())));
+        TableColumn<Inventario, Inventario> disponible = ColumnaDisponibles.crear();
 
-        table.getColumns().addAll(List.of(localidad, precio, total, disponible));
+        // El witness explícito evita "unchecked generic array creation": sin él,
+        // el compilador intenta inferir un tipo común entre columnas de T
+        // distinto (String vs. Inventario) pasándolas por varargs.
+        table.getColumns().addAll(List.<TableColumn<Inventario, ?>>of(localidad, precio, total, disponible));
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         table.getSelectionModel().selectedItemProperty().addListener((obs, previous, current) -> seleccionar(current));
         return table;

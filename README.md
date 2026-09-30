@@ -91,6 +91,13 @@ mvn javafx:run
 
 ## Extras (fuera del alcance original)
 
+- **Alerta de últimos boletos:** la columna "Disponibles" en Aforo y en el
+  punto de venta resalta en naranja "¡Últimos N!" cuando quedan 10 boletos
+  o menos de una localidad, y en rojo "AGOTADO" cuando llega a 0. Es un
+  umbral fijo (no un %), a propósito: "últimos boletos" tiene que sentirse
+  igual en una sala de 10 personas que en un estadio de 10,000.
+
+
 - **Boleto con diseño real:** el diálogo de boletos (fase 5) ya no es una
   tarjeta genérica — banner con la foto del artista (la misma fuente que
   usa "▶ Escuchar", sin llamada extra), línea de perforación, QR grande
