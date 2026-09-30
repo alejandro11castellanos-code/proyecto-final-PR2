@@ -106,10 +106,9 @@ public final class VentaPane extends BorderPane {
         TableColumn<Inventario, String> precio = new TableColumn<>("Precio");
         precio.setCellValueFactory(data -> new SimpleStringProperty(formatearMoneda(data.getValue().precio())));
 
-        TableColumn<Inventario, String> disponible = new TableColumn<>("Disponibles");
-        disponible.setCellValueFactory(data -> new SimpleStringProperty(String.valueOf(data.getValue().cantidadDisponible())));
+        TableColumn<Inventario, Inventario> disponible = ColumnaDisponibles.crear();
 
-        disponibilidadTable.getColumns().addAll(List.of(localidad, precio, disponible));
+        disponibilidadTable.getColumns().addAll(List.<TableColumn<Inventario, ?>>of(localidad, precio, disponible));
         disponibilidadTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         disponibilidadTable.getSelectionModel().selectedItemProperty()
                 .addListener((obs, previous, current) -> agregarButton.setDisable(current == null));
