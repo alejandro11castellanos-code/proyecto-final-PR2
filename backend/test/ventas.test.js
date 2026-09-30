@@ -33,6 +33,7 @@ const ventaConDetalle = {
     nombre_localidad: 'Platea',
     id_concierto: 1,
     titulo_evento: 'Gira Aniversario',
+    nombre_artistico: 'Los Miserables',
   }],
 };
 

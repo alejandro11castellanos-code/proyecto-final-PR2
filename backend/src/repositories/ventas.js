@@ -116,11 +116,12 @@ export function createVentaRepository(pool) {
 
       const itemsResult = await pool.query(
         `SELECT d.id_detalle, d.id_inventario, d.cantidad, d.precio_unitario, d.subtotal,
-                l.nombre AS nombre_localidad, c.id_concierto, c.titulo_evento
+                l.nombre AS nombre_localidad, c.id_concierto, c.titulo_evento, a.nombre_artistico
          FROM detalle_ventas d
          JOIN inventario_boletos i ON i.id_inventario = d.id_inventario
          JOIN localidades l ON l.id_localidad = i.id_localidad
          JOIN conciertos c ON c.id_concierto = i.id_concierto
+         JOIN artistas a ON a.id_artista = c.id_artista
          WHERE d.id_venta = $1
          ORDER BY d.id_detalle`,
         [idVenta],

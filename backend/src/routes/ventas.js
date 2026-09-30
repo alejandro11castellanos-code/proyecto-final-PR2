@@ -12,6 +12,7 @@ async function construirBoletos(venta, qrProvider) {
     return {
       id_detalle: item.id_detalle,
       titulo_evento: item.titulo_evento,
+      nombre_artistico: item.nombre_artistico,
       nombre_localidad: item.nombre_localidad,
       cantidad: item.cantidad,
       codigo,
