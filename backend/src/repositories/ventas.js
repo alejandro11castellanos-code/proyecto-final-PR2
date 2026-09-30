@@ -129,5 +129,31 @@ export function createVentaRepository(pool) {
 
       return { ...venta, items: itemsResult.rows };
     },
+
+    // Lista liviana para el historial: sin el detalle por ítem (eso lo trae
+    // findById cuando se abre una venta puntual). idVendedor/idConcierto en
+    // null significan "sin filtrar por ese campo" — la ruta decide qué
+    // filtros aplicar según el rol de quien pregunta.
+    async listar({ idVendedor = null, idConcierto = null } = {}) {
+      const result = await pool.query(
+        `SELECT v.id_venta, v.fecha_venta, v.id_vendedor, u.nombre_completo AS nombre_vendedor,
+                v.total_venta, COALESCE(SUM(d.cantidad), 0) AS boletos
+         FROM ventas v
+         JOIN usuarios u ON u.id_usuario = v.id_vendedor
+         LEFT JOIN detalle_ventas d ON d.id_venta = v.id_venta
+         WHERE ($1::int IS NULL OR v.id_vendedor = $1)
+           AND ($2::int IS NULL OR EXISTS (
+                 SELECT 1
+                 FROM detalle_ventas d2
+                 JOIN inventario_boletos i2 ON i2.id_inventario = d2.id_inventario
+                 WHERE d2.id_venta = v.id_venta AND i2.id_concierto = $2
+               ))
+         GROUP BY v.id_venta, v.fecha_venta, v.id_vendedor, u.nombre_completo, v.total_venta
+         ORDER BY v.fecha_venta DESC
+         LIMIT 200`,
+        [idVendedor, idConcierto],
+      );
+      return result.rows;
+    },
   };
 }

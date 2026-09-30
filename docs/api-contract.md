@@ -186,7 +186,16 @@ la base de datos rechaza el cambio (`CHECK`) y la API responde `400`.
 | Método | Ruta          | Descripción                                                    | Rol |
 |--------|---------------|-----------------------------------------------------------------|-----|
 | POST   | `/ventas`     | Registra una venta con uno o más ítems en una sola transacción  | *   |
+| GET    | `/ventas` | Historial (lista liviana, sin detalle por ítem)                      | *   |
 | GET    | `/ventas/:id` | Detalle de una venta, con localidad y evento de cada ítem        | *   |
+
+`GET /ventas` — el vendedor solo ve las suyas (`id_vendedor` sale del
+token; si intenta pasar `?vendedor=` de otro, `400`). El administrador
+puede filtrar por `?vendedor=<id>` y/o `?concierto=<id>`. Máximo 200 filas,
+ordenadas por fecha descendente. Cada fila trae `id_venta`, `fecha_venta`,
+`id_vendedor`, `nombre_vendedor`, `total_venta` y `boletos` (suma de
+`detalle_ventas.cantidad`) — el detalle por ítem se pide aparte con
+`GET /ventas/:id`.
 
 ```json
 // POST /ventas
