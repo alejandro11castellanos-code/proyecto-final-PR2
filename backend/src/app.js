@@ -7,12 +7,14 @@ import { createLocalidadRouter } from './routes/localidades.js';
 import { createConciertoRouter } from './routes/conciertos.js';
 import { createInventarioRouter } from './routes/inventario.js';
 import { createVentaRouter } from './routes/ventas.js';
+import { createReporteRouter } from './routes/reportes.js';
 import { createUserRepository } from './repositories/users.js';
 import { createArtistaRepository } from './repositories/artistas.js';
 import { createLocalidadRepository } from './repositories/localidades.js';
 import { createConciertoRepository } from './repositories/conciertos.js';
 import { createInventarioRepository } from './repositories/inventario.js';
 import { createVentaRepository } from './repositories/ventas.js';
+import { createReporteRepository } from './repositories/reportes.js';
 import { createQrProvider } from './services/qrcode.js';
 import { createMailer } from './services/mailer.js';
 
@@ -27,6 +29,7 @@ export function createApp({
   conciertoRepository = createConciertoRepository(pool),
   inventarioRepository = createInventarioRepository(pool),
   ventaRepository = createVentaRepository(pool),
+  reporteRepository = createReporteRepository(pool),
   qrProvider = createQrProvider(),
   mailer = createMailer(),
   jwtSecret = process.env.JWT_SECRET,
@@ -55,6 +58,7 @@ export function createApp({
     createInventarioRouter({ inventarioRepository, conciertoRepository, localidadRepository, jwtSecret }),
   );
   app.use('/ventas', createVentaRouter({ ventaRepository, qrProvider, mailer, jwtSecret }));
+  app.use('/reportes', createReporteRouter({ reporteRepository, jwtSecret }));
 
   // Express identifica los errores de parseo JSON antes de llegar a las rutas.
   app.use((error, _req, res, _next) => {

@@ -276,10 +276,33 @@ claro en vez de fallar oscuro dentro de nodemailer. Verificado enviando un
 correo real a una casilla de prueba (Ethereal): asunto, remitente y los QR
 incrustados llegan correctos y son escaneables.
 
-## Endpoints planificados
+## Fase 6 — Reportes
 
-### Fase 6 — Reportes
+`GET /reportes/dashboard` — exclusivo de `administrador` (igual que
+`/usuarios`: es información gerencial, no algo que necesite el vendedor).
+Una sola llamada trae las siete secciones que arma el dashboard:
 
-| Método | Ruta                          | Descripción                              |
-|--------|-------------------------------|------------------------------------------|
-| GET    | `/reportes/ventas`            | Datos para reportes (por concierto/artista/vendedor) |
+```json
+{
+  "resumen": { "ingresos_totales": "5000.00", "boletos_vendidos": 12, "precio_promedio": "416.67" },
+  "por_concierto": [{ "id_concierto": 1, "titulo_evento": "...", "nombre_artistico": "...", "ingresos": "5000.00", "boletos": 12 }],
+  "por_artista": [{ "id_artista": 1, "nombre_artistico": "...", "ingresos": "5000.00", "boletos": 12 }],
+  "por_vendedor": [{ "id_usuario": 1, "nombre_completo": "...", "rol": "administrador", "ingresos": "5000.00", "ventas": 1 }],
+  "por_dia": [{ "dia": "2026-09-18", "ingresos": "5000.00", "boletos": 12 }],
+  "por_localidad": [{ "id_localidad": 2, "nombre": "Platea", "boletos": 6 }],
+  "ocupacion": [{ "id_concierto": 1, "titulo_evento": "...", "cantidad_total": 2300, "vendido": 12 }]
+}
+```
+
+`por_vendedor` **no filtra por rol**: cualquier usuario autenticado puede
+vender (incluido un administrador probando el punto de venta), así que se
+agregan todas las ventas por `id_vendedor` sin importar el rol de quien las
+hizo — de lo contrario una venta de un administrador sumaría en `resumen`
+pero desaparecería de este desglose, y los totales dejarían de coincidir.
+Verificado justamente por eso: con una venta real hecha por un
+administrador, `resumen.ingresos_totales` coincide con la suma de
+`por_vendedor[].ingresos`.
+
+El destino de estos datos: la pantalla de administración los grafica con
+los charts nativos de JavaFX (dashboard en vivo); JasperReports queda para
+el reporte exportable/imprimible aparte (PDF), no para esta pantalla.
