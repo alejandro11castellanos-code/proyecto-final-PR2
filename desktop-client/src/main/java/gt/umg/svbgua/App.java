@@ -11,6 +11,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -22,6 +25,15 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) {
+        mostrarLogin(stage);
+        stage.show();
+    }
+
+    /**
+     * Pantalla de login. Se puede volver a llamar (desde "Cerrar sesión") sin
+     * reiniciar la app — reemplaza la escena del mismo Stage.
+     */
+    private void mostrarLogin(Stage stage) {
         Label title = new Label("Iniciar sesión");
         title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
 
@@ -46,7 +58,6 @@ public class App extends Application {
 
         stage.setScene(new Scene(root, 480, 360));
         stage.setTitle("SVB-GUA — Acceso");
-        stage.show();
     }
 
     private void login(Stage stage, String username, String password, Button button, Label message) {
@@ -72,18 +83,30 @@ public class App extends Application {
     }
 
     private void onLogin(Stage stage, String token, AuthClient.Usuario usuario) {
+        Runnable cerrarSesion = () -> mostrarLogin(stage);
+
         if ("administrador".equals(usuario.rol())) {
-            stage.setScene(new Scene(new AdminView(catalogClient, token, usuario.nombreCompleto()), 960, 620));
+            stage.setScene(new Scene(
+                    new AdminView(catalogClient, token, usuario.nombreCompleto(), cerrarSesion), 960, 620));
             stage.setTitle("SVB-GUA — Administración");
             return;
         }
 
         Label header = new Label("Punto de venta — " + usuario.nombreCompleto());
         header.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
-        header.setPadding(new Insets(16, 16, 0, 16));
+
+        Region espaciador = new Region();
+        HBox.setHgrow(espaciador, Priority.ALWAYS);
+
+        Button cerrarSesionButton = new Button("Cerrar sesión");
+        cerrarSesionButton.setOnAction(event -> cerrarSesion.run());
+
+        HBox barra = new HBox(header, espaciador, cerrarSesionButton);
+        barra.setAlignment(Pos.CENTER_LEFT);
+        barra.setPadding(new Insets(16, 16, 0, 16));
 
         BorderPane root = new BorderPane();
-        root.setTop(header);
+        root.setTop(barra);
         root.setCenter(new VentaPane(catalogClient, token));
 
         stage.setScene(new Scene(root, 900, 620));
