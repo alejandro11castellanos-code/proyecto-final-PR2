@@ -259,6 +259,7 @@ de escritorio o incrustar en un `<img>`).
     {
       "id_detalle": 1,
       "titulo_evento": "Gira Aniversario 2026",
+      "nombre_artistico": "Los Miserables",
       "nombre_localidad": "VIP",
       "cantidad": 2,
       "codigo": "SVBGUA-V1-D1",
