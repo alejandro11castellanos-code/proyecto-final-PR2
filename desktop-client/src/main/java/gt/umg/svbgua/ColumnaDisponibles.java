@@ -36,7 +36,7 @@ final class ColumnaDisponibles {
                     setText("AGOTADO");
                     setStyle("-fx-text-fill: #b00020; -fx-font-weight: bold;");
                 } else if (disponible <= UMBRAL_ULTIMOS) {
-                    setText("¡Últimos " + disponible + "!");
+                    setText(disponible == 1 ? "¡Último 1!" : "¡Últimos " + disponible + "!");
                     setStyle("-fx-text-fill: #e67e00; -fx-font-weight: bold;");
                 } else {
                     setText(String.valueOf(disponible));
