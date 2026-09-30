@@ -91,6 +91,12 @@ mvn javafx:run
 
 ## Extras (fuera del alcance original)
 
+- **Boleto con diseño real:** el diálogo de boletos (fase 5) ya no es una
+  tarjeta genérica — banner con la foto del artista (la misma fuente que
+  usa "▶ Escuchar", sin llamada extra), línea de perforación, QR grande
+  abajo y una animación de aparición suave (fade + scale) al abrirse.
+
+
 - **Simulador de pago con tarjeta:** al confirmar una venta en el punto de
   venta, se abre un diálogo que pide número de tarjeta, nombre, vencimiento
   y CVV; valida todo localmente (algoritmo de Luhn para el número, mes/año
