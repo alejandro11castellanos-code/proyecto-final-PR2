@@ -26,7 +26,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
@@ -101,10 +100,16 @@ public final class ReportesPane extends BorderPane {
         kpiBoletos.setText(String.valueOf(dashboard.resumen().boletosVendidos()));
         kpiPromedio.setText(formatearMoneda(dashboard.resumen().precioPromedio()));
 
-        contenido.getChildren().setAll(
+        // Las barras quedan mucho mas angostas (y legibles) de a dos por fila
+        // en vez de una sola gráfica ocupando todo el ancho disponible.
+        FlowPane barras = new FlowPane(16, 20);
+        barras.getChildren().addAll(
                 seccion("Ventas por concierto", barChartIngresos(dashboard.porConcierto())),
                 seccion("Ventas por artista", barChartArtista(dashboard.porArtista())),
-                seccion("Ranking de vendedores", barChartVendedor(dashboard.porVendedor())),
+                seccion("Ranking de vendedores", barChartVendedor(dashboard.porVendedor())));
+
+        contenido.getChildren().setAll(
+                barras,
                 seccion("Ventas por día", lineChartPorDia(dashboard.porDia())),
                 seccion("Boletos por localidad", pieChartLocalidad(dashboard.porLocalidad())),
                 seccion("Ocupación por concierto", ocupacionPane(dashboard.ocupacion())));
@@ -254,8 +259,9 @@ public final class ReportesPane extends BorderPane {
         ejeY.setLabel(etiquetaEjeY);
         BarChart<String, Number> chart = new BarChart<>(ejeX, ejeY);
         chart.setLegendVisible(false);
-        chart.setPrefHeight(260);
-        HBox.setHgrow(chart, Priority.ALWAYS);
+        chart.setPrefSize(430, 260);
+        chart.setMaxWidth(430);
+        chart.setCategoryGap(20);
         return chart;
     }
 
