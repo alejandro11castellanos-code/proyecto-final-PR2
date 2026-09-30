@@ -164,6 +164,17 @@ public final class CatalogClient {
         send("POST", "/ventas/" + idVenta + "/enviar", token, new EnviarRequest(email), EnviarResponse.class);
     }
 
+    // ---- Reportes ----
+
+    public Dashboard obtenerDashboard(String token) {
+        HttpResponse<String> response = execute(newRequest("GET", "/reportes/dashboard", token, null));
+        try {
+            return mapper.readValue(response.body(), Dashboard.class);
+        } catch (IOException error) {
+            throw new ApiException("La respuesta del servidor no es válida.", error);
+        }
+    }
+
     // ---- infraestructura HTTP ----
 
     private <T> List<T> getList(String path, String token, Class<T[]> arrayType) {
@@ -300,6 +311,38 @@ public final class CatalogClient {
     }
 
     private record ActualizadoResponse(boolean actualizado) {
+    }
+
+    public record Resumen(String ingresosTotales, int boletosVendidos, String precioPromedio) {
+    }
+
+    public record VentaPorConcierto(
+            int idConcierto, String tituloEvento, String nombreArtistico, String ingresos, int boletos) {
+    }
+
+    public record VentaPorArtista(int idArtista, String nombreArtistico, String ingresos, int boletos) {
+    }
+
+    public record VentaPorVendedor(int idUsuario, String nombreCompleto, String rol, String ingresos, int ventas) {
+    }
+
+    public record VentaPorDia(String dia, String ingresos, int boletos) {
+    }
+
+    public record VentaPorLocalidad(int idLocalidad, String nombre, int boletos) {
+    }
+
+    public record Ocupacion(int idConcierto, String tituloEvento, int cantidadTotal, int vendido) {
+    }
+
+    public record Dashboard(
+            Resumen resumen,
+            List<VentaPorConcierto> porConcierto,
+            List<VentaPorArtista> porArtista,
+            List<VentaPorVendedor> porVendedor,
+            List<VentaPorDia> porDia,
+            List<VentaPorLocalidad> porLocalidad,
+            List<Ocupacion> ocupacion) {
     }
 
     public static final class ApiException extends RuntimeException {
