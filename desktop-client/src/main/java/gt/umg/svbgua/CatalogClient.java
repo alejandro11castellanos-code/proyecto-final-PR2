@@ -265,8 +265,8 @@ public final class CatalogClient {
     public record Venta(int idVenta, int idVendedor, String fechaVenta, String totalVenta) {
     }
 
-    public record Boleto(int idDetalle, String tituloEvento, String nombreLocalidad, int cantidad,
-            String codigo, String qr) {
+    public record Boleto(int idDetalle, String tituloEvento, String nombreArtistico, String nombreLocalidad,
+            int cantidad, String codigo, String qr) {
     }
 
     private record BoletosResponse(int idVenta, List<Boleto> boletos) {
