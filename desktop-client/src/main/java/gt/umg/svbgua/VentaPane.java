@@ -231,6 +231,11 @@ public final class VentaPane extends BorderPane {
         if (carrito.isEmpty()) {
             return;
         }
+        double total = carrito.stream().mapToDouble(ItemCarrito::subtotal).sum();
+        PagoDialog.mostrar(getScene().getWindow(), total, this::registrarVenta);
+    }
+
+    private void registrarVenta() {
         List<ItemVenta> items = new ArrayList<>();
         for (ItemCarrito item : carrito) {
             items.add(new ItemVenta(item.idInventario(), item.cantidad()));
