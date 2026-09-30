@@ -37,6 +37,10 @@ import javafx.util.Duration;
  */
 public final class ReportesPane extends BorderPane {
 
+    private static final double ANCHO_BARRA_ANGOSTA = 430;
+    // Casi el ancho de dos angostas + el espacio entre ellas (430*2 + 16).
+    private static final double ANCHO_BARRA_ANCHA = 876;
+
     private final CatalogClient client;
     private final String token;
 
@@ -105,8 +109,9 @@ public final class ReportesPane extends BorderPane {
         FlowPane barras = new FlowPane(16, 20);
         barras.getChildren().addAll(
                 seccion("Ventas por concierto", barChartIngresos(dashboard.porConcierto())),
-                seccion("Ventas por artista", barChartArtista(dashboard.porArtista())),
-                seccion("Ranking de vendedores", barChartVendedor(dashboard.porVendedor())));
+                seccion("Ranking de vendedores", barChartVendedor(dashboard.porVendedor())),
+                // Va tercera y sola en su fila, con casi el ancho de las otras dos juntas.
+                seccion("Ventas por artista", barChartArtista(dashboard.porArtista(), ANCHO_BARRA_ANCHA)));
 
         contenido.getChildren().setAll(
                 barras,
@@ -135,8 +140,8 @@ public final class ReportesPane extends BorderPane {
         return chart;
     }
 
-    private BarChart<String, Number> barChartArtista(List<VentaPorArtista> filas) {
-        BarChart<String, Number> chart = nuevoBarChart("Ingresos (Q)");
+    private BarChart<String, Number> barChartArtista(List<VentaPorArtista> filas, double ancho) {
+        BarChart<String, Number> chart = nuevoBarChart("Ingresos (Q)", ancho);
         XYChart.Series<String, Number> serie = new XYChart.Series<>();
         for (VentaPorArtista fila : filas) {
             XYChart.Data<String, Number> punto =
@@ -254,13 +259,17 @@ public final class ReportesPane extends BorderPane {
     }
 
     private BarChart<String, Number> nuevoBarChart(String etiquetaEjeY) {
+        return nuevoBarChart(etiquetaEjeY, ANCHO_BARRA_ANGOSTA);
+    }
+
+    private BarChart<String, Number> nuevoBarChart(String etiquetaEjeY, double ancho) {
         CategoryAxis ejeX = new CategoryAxis();
         NumberAxis ejeY = new NumberAxis();
         ejeY.setLabel(etiquetaEjeY);
         BarChart<String, Number> chart = new BarChart<>(ejeX, ejeY);
         chart.setLegendVisible(false);
-        chart.setPrefSize(430, 260);
-        chart.setMaxWidth(430);
+        chart.setPrefSize(ancho, 260);
+        chart.setMaxWidth(ancho);
         chart.setCategoryGap(20);
         return chart;
     }
