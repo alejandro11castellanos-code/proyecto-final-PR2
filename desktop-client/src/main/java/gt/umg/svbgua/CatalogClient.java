@@ -149,6 +149,24 @@ public final class CatalogClient {
         return send("POST", "/ventas", token, new VentaRequest(items), Venta.class);
     }
 
+    /**
+     * Historial. Un vendedor solo puede pedir el suyo (idVendedor lo ignora
+     * el backend, que usa el del token); un administrador puede pasar
+     * cualquiera de los dos filtros, o ambos en null para traer todo.
+     */
+    public List<VentaResumen> listarVentas(String token, Integer idVendedor, Integer idConcierto) {
+        StringBuilder ruta = new StringBuilder("/ventas");
+        String separador = "?";
+        if (idVendedor != null) {
+            ruta.append(separador).append("vendedor=").append(idVendedor);
+            separador = "&";
+        }
+        if (idConcierto != null) {
+            ruta.append(separador).append("concierto=").append(idConcierto);
+        }
+        return getList(ruta.toString(), token, VentaResumen[].class);
+    }
+
     // GET /ventas/:id/boletos no devuelve un array plano sino
     // { id_venta, boletos: [...] }, así que no puede pasar por getList().
     public List<Boleto> listBoletos(String token, int idVenta) {
@@ -263,6 +281,10 @@ public final class CatalogClient {
     }
 
     public record Venta(int idVenta, int idVendedor, String fechaVenta, String totalVenta) {
+    }
+
+    public record VentaResumen(int idVenta, String fechaVenta, int idVendedor, String nombreVendedor,
+            String totalVenta, int boletos) {
     }
 
     public record Boleto(int idDetalle, String tituloEvento, String nombreArtistico, String nombreLocalidad,
