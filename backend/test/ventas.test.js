@@ -8,6 +8,7 @@ import { MailerError } from '../src/services/mailer.js';
 
 const jwtSecret = 'secreto-de-prueba';
 const vendedorToken = jwt.sign({ id_usuario: 2, rol: 'vendedor' }, jwtSecret);
+const adminToken = jwt.sign({ id_usuario: 1, rol: 'administrador' }, jwtSecret);
 
 const ventaCreada = {
   id_venta: 1,
@@ -37,10 +38,11 @@ const ventaConDetalle = {
   }],
 };
 
-function fakeVentaRepository({ crear, findById } = {}) {
+function fakeVentaRepository({ crear, findById, listar } = {}) {
   return {
     crear: crear ?? (async () => ventaCreada),
     findById: findById ?? (async () => null),
+    listar: listar ?? (async () => []),
   };
 }
 
@@ -144,6 +146,68 @@ test('POST /ventas responde 409 si no hay disponibilidad suficiente', async () =
     .send({ items: [{ id_inventario: 1, cantidad: 10 }] });
 
   assert.equal(response.status, 409);
+});
+
+test('GET /ventas exige autenticación', async () => {
+  const response = await request(buildApp()).get('/ventas');
+  assert.equal(response.status, 401);
+});
+
+test('GET /ventas rechaza que un vendedor filtre por otro vendedor', async () => {
+  let recibido;
+  const app = buildApp({
+    listar: async (filtros) => {
+      recibido = filtros;
+      return [];
+    },
+  });
+
+  const response = await request(app)
+    .get('/ventas?vendedor=99')
+    .set('Authorization', `Bearer ${vendedorToken}`);
+
+  assert.equal(response.status, 400);
+  assert.equal(recibido, undefined);
+});
+
+test('GET /ventas (vendedor) sin filtro trae su propio historial', async () => {
+  let recibido;
+  const app = buildApp({
+    listar: async (filtros) => {
+      recibido = filtros;
+      return [{ id_venta: 1, id_vendedor: 2, nombre_vendedor: 'Ana', total_venta: '100.00', boletos: 2 }];
+    },
+  });
+
+  const response = await request(app).get('/ventas').set('Authorization', `Bearer ${vendedorToken}`);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.length, 1);
+  assert.deepEqual(recibido, { idVendedor: 2, idConcierto: null });
+});
+
+test('GET /ventas (administrador) puede filtrar por vendedor y por concierto', async () => {
+  let recibido;
+  const app = buildApp({
+    listar: async (filtros) => {
+      recibido = filtros;
+      return [];
+    },
+  });
+
+  const response = await request(app)
+    .get('/ventas?vendedor=3&concierto=1')
+    .set('Authorization', `Bearer ${adminToken}`);
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(recibido, { idVendedor: 3, idConcierto: 1 });
+});
+
+test('GET /ventas rechaza un filtro no numérico', async () => {
+  const response = await request(buildApp())
+    .get('/ventas?concierto=abc')
+    .set('Authorization', `Bearer ${adminToken}`);
+  assert.equal(response.status, 400);
 });
 
 test('GET /ventas/:id responde 404 si no existe', async () => {

@@ -68,6 +68,30 @@ export function createVentaRouter({ ventaRepository, qrProvider, mailer, jwtSecr
     }
   });
 
+  // El vendedor solo ve su propio historial (no puede pedir el de otro
+  // vendedor); el administrador puede filtrar por vendedor y/o concierto.
+  router.get('/', requireAuth, async (req, res, next) => {
+    const esAdmin = req.user.rol === 'administrador';
+
+    if (req.query.vendedor !== undefined && (!esAdmin || Number.isNaN(Number(req.query.vendedor)))) {
+      return res.status(400).json({ error: 'vendedor debe ser un id numérico (solo administrador puede filtrar).' });
+    }
+    if (req.query.concierto !== undefined && Number.isNaN(Number(req.query.concierto))) {
+      return res.status(400).json({ error: 'concierto debe ser un id numérico.' });
+    }
+
+    const idVendedor = esAdmin
+      ? (req.query.vendedor !== undefined ? Number(req.query.vendedor) : null)
+      : req.user.id_usuario;
+    const idConcierto = req.query.concierto !== undefined ? Number(req.query.concierto) : null;
+
+    try {
+      res.json(await ventaRepository.listar({ idVendedor, idConcierto }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.get('/:id', requireAuth, async (req, res, next) => {
     try {
       const venta = await ventaRepository.findById(req.params.id);
