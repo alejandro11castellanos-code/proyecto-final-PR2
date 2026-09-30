@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="por_vendedor" pageWidth="595" pageHeight="842" columnWidth="535" leftMargin="30" rightMargin="30" topMargin="30" bottomMargin="30">
+  <field name="vendedor" class="java.lang.String"/>
+  <field name="rol" class="java.lang.String"/>
+  <field name="ingresos" class="java.lang.String"/>
+  <field name="ventas" class="java.lang.String"/>
+  <title>
+    <band height="28">
+      <staticText>
+        <reportElement x="0" y="0" width="535" height="24"/>
+        <textElement><font size="15" isBold="true"/></textElement>
+        <text><![CDATA[Ranking de vendedores]]></text>
+      </staticText>
+    </band>
+  </title>
+  <columnHeader>
+    <band height="20">
+      <staticText>
+        <reportElement x="0" y="0" width="220" height="20" backcolor="#EEEEEE" mode="Opaque"/>
+        <box><pen lineWidth="0.5"/></box>
+        <textElement><font isBold="true" size="9"/></textElement>
+        <text><![CDATA[Vendedor]]></text>
+      </staticText>
+      <staticText>
+        <reportElement x="220" y="0" width="100" height="20" backcolor="#EEEEEE" mode="Opaque"/>
+        <box><pen lineWidth="0.5"/></box>
+        <textElement><font isBold="true" size="9"/></textElement>
+        <text><![CDATA[Rol]]></text>
+      </staticText>
+      <staticText>
+        <reportElement x="320" y="0" width="115" height="20" backcolor="#EEEEEE" mode="Opaque"/>
+        <box><pen lineWidth="0.5"/></box>
+        <textElement textAlignment="Right"><font isBold="true" size="9"/></textElement>
+        <text><![CDATA[Ingresos]]></text>
+      </staticText>
+      <staticText>
+        <reportElement x="435" y="0" width="100" height="20" backcolor="#EEEEEE" mode="Opaque"/>
+        <box><pen lineWidth="0.5"/></box>
+        <textElement textAlignment="Right"><font isBold="true" size="9"/></textElement>
+        <text><![CDATA[Ventas]]></text>
+      </staticText>
+    </band>
+  </columnHeader>
+  <detail>
+    <band height="18">
+      <textField>
+        <reportElement x="0" y="0" width="220" height="18"/>
+        <box><pen lineWidth="0.25" lineColor="#CCCCCC"/></box>
+        <textElement><font size="9"/></textElement>
+        <textFieldExpression><![CDATA[$F{vendedor}]]></textFieldExpression>
+      </textField>
+      <textField>
+        <reportElement x="220" y="0" width="100" height="18"/>
+        <box><pen lineWidth="0.25" lineColor="#CCCCCC"/></box>
+        <textElement><font size="9"/></textElement>
+        <textFieldExpression><![CDATA[$F{rol}]]></textFieldExpression>
+      </textField>
+      <textField>
+        <reportElement x="320" y="0" width="115" height="18"/>
+        <box><pen lineWidth="0.25" lineColor="#CCCCCC"/></box>
+        <textElement textAlignment="Right"><font size="9"/></textElement>
+        <textFieldExpression><![CDATA[$F{ingresos}]]></textFieldExpression>
+      </textField>
+      <textField>
+        <reportElement x="435" y="0" width="100" height="18"/>
+        <box><pen lineWidth="0.25" lineColor="#CCCCCC"/></box>
+        <textElement textAlignment="Right"><font size="9"/></textElement>
+        <textFieldExpression><![CDATA[$F{ventas}]]></textFieldExpression>
+      </textField>
+    </band>
+  </detail>
+  <noData>
+    <band height="20">
+      <staticText>
+        <reportElement x="0" y="0" width="535" height="20"/>
+        <textElement><font size="9" isItalic="true"/></textElement>
+        <text><![CDATA[Sin datos.]]></text>
+      </staticText>
+    </band>
+  </noData>
+</jasperReport>

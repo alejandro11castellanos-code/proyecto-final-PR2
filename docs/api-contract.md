@@ -316,3 +316,26 @@ administrador, `resumen.ingresos_totales` coincide con la suma de
 El destino de estos datos: la pantalla de administración los grafica con
 los charts nativos de JavaFX (dashboard en vivo); JasperReports queda para
 el reporte exportable/imprimible aparte (PDF), no para esta pantalla.
+
+### Exportación a PDF (JasperReports)
+
+El botón "Exportar PDF" del dashboard (`ReportesPane`) arma el mismo
+`Dashboard` que ya se graficó y se lo pasa a `ReporteVentasService`, que
+compila y llena cuatro plantillas JRXML (portada con KPIs, por concierto,
+por artista, por vendedor) y las concatena en un solo PDF vía
+`JRPdfExporter` — no son subreports XML, son cuatro `JasperPrint`
+independientes fusionados al exportar, más simple de mantener sin un
+diseñador visual.
+
+Dos detalles de JasperReports que no son obvios y costaron una vuelta de
+verificación: los parámetros del reporte deben viajar en un `HashMap`
+mutable (JasperReports hace `.put()` internamente; `Map.of()` explota con
+`UnsupportedOperationException`), y las filas de datos deben viajar como
+`Map<String, ?>` vía `JRMapCollectionDataSource`, no como los `record` de
+`CatalogClient` — los accessors de un record son `x()`, no `getX()`, y el
+`JRBeanCollectionDataSource` que lee JavaBeans no los reconoce.
+
+Se fijó la dependencia en `jasperreports:6.21.4` a propósito: la rama 7.x
+migró de `javax` a `jakarta`, y este proyecto no tiene nada de eso — 6.21.x
+es la última versión antes de ese cambio. Verificado generando un PDF real
+de 4 páginas contra el dashboard de datos reales en Neon.

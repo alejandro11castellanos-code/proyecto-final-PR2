@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="portada" pageWidth="595" pageHeight="842" columnWidth="535" leftMargin="30" rightMargin="30" topMargin="30" bottomMargin="30">
+  <parameter name="subtitulo" class="java.lang.String"/>
+  <parameter name="ingresosTotales" class="java.lang.String"/>
+  <parameter name="boletosVendidos" class="java.lang.String"/>
+  <parameter name="precioPromedio" class="java.lang.String"/>
+  <title>
+    <band height="160">
+      <staticText>
+        <reportElement x="0" y="0" width="535" height="30"/>
+        <textElement><font size="20" isBold="true"/></textElement>
+        <text><![CDATA[SVB-GUA — Reporte de Ventas]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="0" y="34" width="535" height="18"/>
+        <textElement><font size="10"/></textElement>
+        <textFieldExpression><![CDATA[$P{subtitulo}]]></textFieldExpression>
+      </textField>
+      <line>
+        <reportElement x="0" y="62" width="535" height="1"/>
+      </line>
+      <staticText>
+        <reportElement x="0" y="80" width="180" height="20"/>
+        <textElement><font size="11" isBold="true"/></textElement>
+        <text><![CDATA[Ingresos totales]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="0" y="100" width="180" height="26"/>
+        <textElement><font size="16"/></textElement>
+        <textFieldExpression><![CDATA[$P{ingresosTotales}]]></textFieldExpression>
+      </textField>
+      <staticText>
+        <reportElement x="185" y="80" width="180" height="20"/>
+        <textElement><font size="11" isBold="true"/></textElement>
+        <text><![CDATA[Boletos vendidos]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="185" y="100" width="180" height="26"/>
+        <textElement><font size="16"/></textElement>
+        <textFieldExpression><![CDATA[$P{boletosVendidos}]]></textFieldExpression>
+      </textField>
+      <staticText>
+        <reportElement x="370" y="80" width="165" height="20"/>
+        <textElement><font size="11" isBold="true"/></textElement>
+        <text><![CDATA[Precio promedio]]></text>
+      </staticText>
+      <textField>
+        <reportElement x="370" y="100" width="165" height="26"/>
+        <textElement><font size="16"/></textElement>
+        <textFieldExpression><![CDATA[$P{precioPromedio}]]></textFieldExpression>
+      </textField>
+    </band>
+  </title>
+</jasperReport>
