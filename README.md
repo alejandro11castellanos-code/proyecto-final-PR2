@@ -97,6 +97,13 @@ mvn javafx:run
   reimprimir o reenviar los boletos de una venta pasada sin pantalla nueva.
 
 
+- **Rediseño de la interfaz:** tema global (`theme.css`) con barra lateral de
+  navegación, tarjetas, tablas y campos redondeados, login con panel de marca
+  y paleta de colores en las gráficas. Animaciones cortas: transición entre
+  secciones, entrada en cascada de las tarjetas de Reportes, contadores de KPI
+  y barras de ocupación que se llenan, escala al pasar el mouse por los
+  botones y sacudida del formulario ante credenciales inválidas.
+
 - **Filtros en reportes:** el dashboard y el PDF se pueden filtrar por rango
   de fecha de compra, artista, concierto, vendedor y localidad (se combinan).
   La portada del PDF indica qué filtros se aplicaron. La ocupación es una

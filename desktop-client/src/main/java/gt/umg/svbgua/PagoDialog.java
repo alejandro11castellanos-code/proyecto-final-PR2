@@ -69,6 +69,7 @@ public final class PagoDialog {
         Button pagarButton = new Button("Pagar " + formatearMoneda(monto));
         pagarButton.setDefaultButton(true);
         Button cancelarButton = new Button("Cancelar");
+        cancelarButton.getStyleClass().add("secondary");
         cancelarButton.setOnAction(event -> stage.close());
 
         pagarButton.setOnAction(event -> intentarPago(
@@ -81,7 +82,9 @@ public final class PagoDialog {
         root.setPadding(new Insets(20));
         root.setAlignment(Pos.CENTER_LEFT);
 
-        stage.setScene(new Scene(root, 340, 430));
+        Scene escena = new Scene(root, 340, 430);
+        Tema.aplicar(escena);
+        stage.setScene(escena);
         stage.show();
     }
 
