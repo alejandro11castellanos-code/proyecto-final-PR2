@@ -2,6 +2,9 @@ package gt.umg.svbgua;
 
 import gt.umg.svbgua.CatalogClient.Artista;
 import gt.umg.svbgua.CatalogClient.Concierto;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Locale;
 import javafx.beans.property.SimpleStringProperty;
@@ -12,6 +15,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Spinner;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -23,9 +28,9 @@ import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 
 /**
- * Pantalla de administración de conciertos. La fecha se ingresa en formato
- * ISO 8601 (por ejemplo {@code 2026-11-15T20:00:00Z}); una selección visual de
- * fecha/hora queda para una iteración posterior.
+ * Pantalla de administración de conciertos. Fecha y hora se eligen por separado
+ * (selector de fecha y horas/minutos en 24 h) y viajan como hora local de
+ * Guatemala sin zona.
  */
 public final class ConciertosPane extends BorderPane {
 
@@ -41,7 +46,9 @@ public final class ConciertosPane extends BorderPane {
 
     private final ComboBox<Artista> artistaCombo = new ComboBox<>(artistas);
     private final TextField tituloField = new TextField();
-    private final TextField fechaField = new TextField();
+    private final DatePicker fechaPicker = Formulario.selectorDeFecha();
+    private final Spinner<Integer> horaSpinner = Formulario.spinnerDosDigitos(23, 20);
+    private final Spinner<Integer> minutoSpinner = Formulario.spinnerDosDigitos(59, 0);
     private final TextField recintoField = new TextField();
     private final ComboBox<String> estadoCombo = new ComboBox<>(FXCollections.observableArrayList(ESTADOS));
     private final Label status = new Label();
@@ -95,7 +102,7 @@ public final class ConciertosPane extends BorderPane {
         artista.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().nombreArtistico()));
 
         TableColumn<Concierto, String> fecha = new TableColumn<>("Fecha");
-        fecha.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().fechaConcierto()));
+        fecha.setCellValueFactory(data -> new SimpleStringProperty(Fechas.fechaHora(data.getValue().fechaConcierto())));
 
         TableColumn<Concierto, String> recinto = new TableColumn<>("Recinto");
         recinto.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().recinto()));
@@ -103,6 +110,9 @@ public final class ConciertosPane extends BorderPane {
         TableColumn<Concierto, String> estado = new TableColumn<>("Estado");
         estado.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().estado()));
 
+        // Sin ancho mínimo, con 5 columnas la fecha se corta ("6 nov 2026, 0...").
+        fecha.setMinWidth(150);
+        estado.setMinWidth(90);
         table.getColumns().addAll(List.of(titulo, artista, fecha, recinto, estado));
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         table.setItems(filtrado);
@@ -126,7 +136,6 @@ public final class ConciertosPane extends BorderPane {
         // Un artista pudo darse de alta en otra pestaña después de armar esta.
         artistaCombo.setOnShowing(event -> cargarArtistas());
         tituloField.setPromptText("Ej. Gira Aniversario 2026");
-        fechaField.setPromptText("2026-11-15T20:00:00Z");
         recintoField.setPromptText("Ej. Teatro Nacional");
         estadoCombo.setPromptText("Seleccione");
 
@@ -145,10 +154,24 @@ public final class ConciertosPane extends BorderPane {
         return Formulario.tarjeta(tituloForm, "Seleccione un concierto de la tabla o cree uno nuevo.",
                 Formulario.campo("Artista", artistaCombo),
                 Formulario.campo("Título del evento", tituloField),
-                Formulario.campo("Fecha y hora (ISO 8601)", fechaField),
+                Formulario.dosColumnas(Formulario.campo("Fecha", fechaPicker), campoHora()),
                 Formulario.dosColumnas(Formulario.campo("Recinto", recintoField), Formulario.campo("Estado", estadoCombo)),
                 Formulario.botones(guardarButton, nuevoButton, eliminarButton),
                 status);
+    }
+
+    private VBox campoHora() {
+        HBox horaYMinuto = new HBox(4, horaSpinner, new Label(":"), minutoSpinner);
+        horaYMinuto.setAlignment(Pos.CENTER_LEFT);
+        Label etiqueta = new Label("Hora (24 h)");
+        etiqueta.getStyleClass().add("field-label");
+        return new VBox(5, etiqueta, horaYMinuto);
+    }
+
+    private void mostrarFechaHora(LocalDateTime fechaHora) {
+        fechaPicker.setValue(fechaHora.toLocalDate());
+        horaSpinner.getValueFactory().setValue(fechaHora.getHour());
+        minutoSpinner.getValueFactory().setValue(fechaHora.getMinute());
     }
 
     private void seleccionar(Concierto concierto) {
@@ -164,7 +187,10 @@ public final class ConciertosPane extends BorderPane {
                 .findFirst()
                 .ifPresent(artistaCombo::setValue);
         tituloField.setText(concierto.tituloEvento());
-        fechaField.setText(concierto.fechaConcierto());
+        Fechas.parsear(concierto.fechaConcierto()).ifPresentOrElse(this::mostrarFechaHora, () -> {
+            fechaPicker.setValue(null);
+            status.setText("No se pudo interpretar la fecha guardada de este concierto; elija una nueva.");
+        });
         recintoField.setText(concierto.recinto());
         estadoCombo.setValue(concierto.estado());
         previewPanel.cargarParaArtista(concierto.nombreArtistico());
@@ -177,7 +203,9 @@ public final class ConciertosPane extends BorderPane {
         tituloForm.setText("Nuevo concierto");
         artistaCombo.setValue(null);
         tituloField.clear();
-        fechaField.clear();
+        fechaPicker.setValue(null);
+        horaSpinner.getValueFactory().setValue(20);
+        minutoSpinner.getValueFactory().setValue(0);
         recintoField.clear();
         estadoCombo.setValue(null);
         eliminarButton.setDisable(true);
@@ -204,12 +232,12 @@ public final class ConciertosPane extends BorderPane {
     private void guardar() {
         Artista artista = artistaCombo.getValue();
         String titulo = tituloField.getText();
-        String fecha = fechaField.getText();
+        LocalDate fechaElegida = fechaPicker.getValue();
         String recinto = recintoField.getText();
         String estado = estadoCombo.getValue();
 
         if (artista == null || titulo == null || titulo.isBlank()
-                || fecha == null || fecha.isBlank() || recinto == null || recinto.isBlank()) {
+                || fechaElegida == null || recinto == null || recinto.isBlank()) {
             status.setText("Artista, título, fecha y recinto son obligatorios.");
             return;
         }
@@ -217,6 +245,9 @@ public final class ConciertosPane extends BorderPane {
             status.setText("Al editar un concierto, el estado es obligatorio.");
             return;
         }
+
+        String fecha = Fechas.paraApi(LocalDateTime.of(fechaElegida,
+                LocalTime.of(horaSpinner.getValue(), minutoSpinner.getValue())));
 
         guardarButton.setDisable(true);
         Runnable onDone = () -> {
@@ -228,7 +259,7 @@ public final class ConciertosPane extends BorderPane {
         if (seleccionado == null) {
             Async.run(
                     () -> client.createConcierto(
-                            token, artista.idArtista(), titulo.trim(), fecha.trim(), recinto.trim(), estado),
+                            token, artista.idArtista(), titulo.trim(), fecha, recinto.trim(), estado),
                     ignored -> onDone.run(),
                     error -> {
                         guardarButton.setDisable(false);
@@ -237,7 +268,7 @@ public final class ConciertosPane extends BorderPane {
         } else {
             Async.run(
                     () -> client.updateConcierto(token, seleccionado.idConcierto(), artista.idArtista(),
-                            titulo.trim(), fecha.trim(), recinto.trim(), estado),
+                            titulo.trim(), fecha, recinto.trim(), estado),
                     ignored -> onDone.run(),
                     error -> {
                         guardarButton.setDisable(false);

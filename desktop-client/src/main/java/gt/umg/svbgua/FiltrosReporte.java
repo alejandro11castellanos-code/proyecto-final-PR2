@@ -1,7 +1,6 @@
 package gt.umg.svbgua;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,8 +9,6 @@ public record FiltrosReporte(LocalDate desde, LocalDate hasta, Integer idArtista
         Integer idVendedor, Integer idLocalidad) {
 
     public static final FiltrosReporte NINGUNO = new FiltrosReporte(null, null, null, null, null, null);
-
-    private static final DateTimeFormatter FECHA_LEGIBLE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public boolean hayFiltros() {
         return !equals(NINGUNO);
@@ -33,11 +30,11 @@ public record FiltrosReporte(LocalDate desde, LocalDate hasta, Integer idArtista
     public String descripcion(String artista, String concierto, String vendedor, String localidad) {
         List<String> partes = new ArrayList<>();
         if (desde != null && hasta != null) {
-            partes.add("Fechas: " + desde.format(FECHA_LEGIBLE) + " al " + hasta.format(FECHA_LEGIBLE));
+            partes.add("Fechas: " + Fechas.fecha(desde) + " al " + Fechas.fecha(hasta));
         } else if (desde != null) {
-            partes.add("Desde el " + desde.format(FECHA_LEGIBLE));
+            partes.add("Desde el " + Fechas.fecha(desde));
         } else if (hasta != null) {
-            partes.add("Hasta el " + hasta.format(FECHA_LEGIBLE));
+            partes.add("Hasta el " + Fechas.fecha(hasta));
         }
         if (idArtista != null) {
             partes.add("Artista: " + artista);

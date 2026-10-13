@@ -65,7 +65,7 @@ public final class ReporteVentasService {
 
     private static JasperPrint llenarPortada(Dashboard dashboard, String generadoPor, String filtrosAplicados)
             throws JRException {
-        String fecha = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        String fecha = Fechas.fechaHora(LocalDateTime.now());
 
         Map<String, Object> parametros = new HashMap<>();
         parametros.put("subtitulo", "Generado el " + fecha + " por " + generadoPor);
@@ -143,7 +143,7 @@ public final class ReporteVentasService {
         List<Map<String, ?>> filas = new ArrayList<>();
         for (VentaPorDia venta : dashboard.porDia()) {
             Map<String, Object> fila = new HashMap<>();
-            fila.put("dia", venta.dia());
+            fila.put("dia", Fechas.dia(venta.dia()));
             // AAAA-MM-DD → DD/MM: la fecha completa no cabe en el eje X y JFreeChart la recorta a "...".
             fila.put("diaCorto", venta.dia().substring(8, 10) + "/" + venta.dia().substring(5, 7));
             fila.put("ingresos", formatearMoneda(venta.ingresos()));

@@ -110,6 +110,11 @@ mvn javafx:run
   la portada del concierto elegido se muestra difuminada de fondo y cambia con
   un fundido al elegir otro.
 
+- **Fecha y hora legibles:** el formulario de conciertos pide la fecha con un
+  calendario y la hora en horas/minutos (24 h), sin formatos técnicos. En toda la
+  app las fechas se ven como `15 nov 2026, 20:00`. Las fechas viajan como hora
+  local de Guatemala sin zona (ver `docs/api-contract.md`).
+
 - **Filtros en reportes:** el dashboard y el PDF se pueden filtrar por rango
   de fecha de compra, artista, concierto, vendedor y localidad (se combinan).
   La portada del PDF indica qué filtros se aplicaron. La ocupación es una

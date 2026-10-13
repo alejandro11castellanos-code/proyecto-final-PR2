@@ -98,7 +98,7 @@ public final class HistorialPane extends BorderPane {
 
     private TableView<VentaResumen> buildTable() {
         TableColumn<VentaResumen, String> fecha = new TableColumn<>("Fecha");
-        fecha.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().fechaVenta()));
+        fecha.setCellValueFactory(data -> new SimpleStringProperty(Fechas.fechaHora(data.getValue().fechaVenta())));
 
         TableColumn<VentaResumen, String> id = new TableColumn<>("Venta #");
         id.setCellValueFactory(data -> new SimpleStringProperty(String.valueOf(data.getValue().idVenta())));
