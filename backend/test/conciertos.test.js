@@ -58,7 +58,7 @@ function buildApp(seed = []) {
 const conciertoValido = {
   id_artista: 1,
   titulo_evento: 'Gira Aniversario',
-  fecha_concierto: '2026-11-15T20:00:00Z',
+  fecha_concierto: '2026-11-15T20:00:00',
   recinto: 'Teatro Nacional',
 };
 
@@ -158,4 +158,52 @@ test('DELETE /conciertos/:id responde 409 si tiene inventario o ventas asociadas
     .set('Authorization', `Bearer ${adminToken}`);
 
   assert.equal(response.status, 409);
+});
+
+test('POST /conciertos guarda la fecha y hora tal cual, como hora local sin zona', async () => {
+  const response = await request(buildApp())
+    .post('/conciertos')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send(conciertoValido);
+
+  assert.equal(response.status, 201);
+  assert.equal(response.body.fecha_concierto, '2026-11-15T20:00:00');
+});
+
+test('POST /conciertos acepta la hora sin segundos y la normaliza', async () => {
+  const response = await request(buildApp())
+    .post('/conciertos')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ ...conciertoValido, fecha_concierto: '2026-11-15T20:30' });
+
+  assert.equal(response.status, 201);
+  assert.equal(response.body.fecha_concierto, '2026-11-15T20:30:00');
+});
+
+for (const [descripcion, fecha] of [
+  ['una fecha con Z (UTC)', '2026-11-15T20:00:00Z'],
+  ['una fecha con desplazamiento horario', '2026-11-15T20:00:00-06:00'],
+  ['un día inexistente', '2026-02-31T20:00:00'],
+  ['una hora fuera de rango', '2026-11-15T25:00:00'],
+  ['una fecha sin hora', '2026-11-15'],
+]) {
+  test(`POST /conciertos rechaza ${descripcion} (la hora no lleva zona)`, async () => {
+    const response = await request(buildApp())
+      .post('/conciertos')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ ...conciertoValido, fecha_concierto: fecha });
+
+    assert.equal(response.status, 400);
+    assert.match(response.body.error, /AAAA-MM-DDTHH:mm/);
+  });
+}
+
+test('PUT /conciertos/:id también rechaza una fecha con zona', async () => {
+  const app = buildApp([{ id_concierto: 1, ...conciertoValido, estado: 'programado' }]);
+  const response = await request(app)
+    .put('/conciertos/1')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ ...conciertoValido, estado: 'programado', fecha_concierto: '2026-11-15T20:00:00Z' });
+
+  assert.equal(response.status, 400);
 });

@@ -76,7 +76,7 @@ CREATE TABLE inventario_boletos (
 CREATE TABLE ventas (
     id_venta    SERIAL         PRIMARY KEY,
     id_vendedor INTEGER        NOT NULL REFERENCES usuarios (id_usuario),
-    fecha_venta TIMESTAMP      NOT NULL DEFAULT NOW(),
+    fecha_venta TIMESTAMP      NOT NULL DEFAULT (NOW() AT TIME ZONE 'America/Guatemala'),
     total_venta DECIMAL(10, 2) NOT NULL CHECK (total_venta >= 0)
 );
 

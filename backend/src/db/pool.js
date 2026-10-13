@@ -1,7 +1,10 @@
 import 'dotenv/config';
 import pg from 'pg';
+import { OID_TIMESTAMP, aFechaLocalIso } from './timestamps.js';
 
 const { Pool } = pg;
+
+pg.types.setTypeParser(OID_TIMESTAMP, aFechaLocalIso);
 
 /**
  * Shared connection pool. Managed Postgres (Neon/Supabase) requires SSL;
