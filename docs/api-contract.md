@@ -375,3 +375,27 @@ eje X más anchas que su categoría, y Jasper no expone ese ajuste en el XML,
 por eso `por_dia.jrxml` usa `EtiquetasVerticalesCustomizer` (rota las
 etiquetas). Y cuando no hay ventas con los filtros elegidos la gráfica se
 oculta (`hayDatos`) y se imprime un aviso, en vez de ejes vacíos con "-0".
+
+
+## Fechas y horas
+
+Todas las fechas y horas de la API son **hora local de Guatemala, sin zona**, en
+formato `AAAA-MM-DDTHH:mm:ss` (por ejemplo `2026-11-15T20:00:00`). No llevan `Z`
+ni desplazamiento: la columna `TIMESTAMP` de Postgres no guarda zona, así que
+cualquier zona que se enviara se descartaba en silencio y la hora se corría.
+
+- **Lectura:** `node-pg` convertía estas columnas a `Date` interpretándolas en la
+  zona del proceso, de modo que el mismo dato salía distinto según dónde corriera
+  el servidor (verificado: guardar `20:00` devolvía `02:00Z` del día siguiente).
+  Ahora el parser de `TIMESTAMP` (`src/db/timestamps.js`) devuelve el texto tal cual.
+- **Escritura (`POST`/`PUT /conciertos`):** `fecha_concierto` acepta
+  `AAAA-MM-DDTHH:mm` o `AAAA-MM-DDTHH:mm:ss`. Una fecha con `Z` o con
+  desplazamiento, un día inexistente, una hora fuera de rango o una fecha sin hora
+  responden `400`.
+- **`ventas.fecha_venta`** toma por defecto `NOW() AT TIME ZONE 'America/Guatemala'`
+  (antes `NOW()`, que en Neon es UTC). Las ventas anteriores a este cambio quedaron
+  guardadas en UTC; las de demostración sembradas a mano ya estaban en hora local.
+
+El cliente de escritorio muestra estas fechas como `15 nov 2026, 20:00`
+(`Fechas.java`) y en el formulario de conciertos las pide por separado: selector
+de fecha y hora/minutos en 24 h.

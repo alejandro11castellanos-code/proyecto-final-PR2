@@ -402,8 +402,9 @@ public final class ReportesPane extends BorderPane {
 
         XYChart.Series<String, Number> serie = new XYChart.Series<>();
         for (VentaPorDia fila : filas) {
-            XYChart.Data<String, Number> punto = new XYChart.Data<>(fila.dia(), Double.parseDouble(fila.ingresos()));
-            instalarTooltip(punto, fila.dia() + "\n" + formatearMoneda(fila.ingresos())
+            String dia = Fechas.dia(fila.dia());
+            XYChart.Data<String, Number> punto = new XYChart.Data<>(dia, Double.parseDouble(fila.ingresos()));
+            instalarTooltip(punto, dia + "\n" + formatearMoneda(fila.ingresos())
                     + " · " + fila.boletos() + " boletos");
             serie.getData().add(punto);
         }
