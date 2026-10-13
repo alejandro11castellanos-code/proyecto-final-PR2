@@ -46,9 +46,10 @@ public final class ReporteVentasService {
     private ReporteVentasService() {
     }
 
-    public static void generar(Dashboard dashboard, String generadoPor, File destino) throws JRException {
+    public static void generar(Dashboard dashboard, String generadoPor, String filtrosAplicados, File destino)
+            throws JRException {
         List<JasperPrint> secciones = List.of(
-                llenarPortada(dashboard, generadoPor),
+                llenarPortada(dashboard, generadoPor, filtrosAplicados),
                 llenarPorConcierto(dashboard),
                 llenarPorArtista(dashboard),
                 llenarPorVendedor(dashboard));
@@ -59,11 +60,13 @@ public final class ReporteVentasService {
         exportador.exportReport();
     }
 
-    private static JasperPrint llenarPortada(Dashboard dashboard, String generadoPor) throws JRException {
+    private static JasperPrint llenarPortada(Dashboard dashboard, String generadoPor, String filtrosAplicados)
+            throws JRException {
         String fecha = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
 
         Map<String, Object> parametros = new HashMap<>();
         parametros.put("subtitulo", "Generado el " + fecha + " por " + generadoPor);
+        parametros.put("filtros", filtrosAplicados);
         parametros.put("ingresosTotales", formatearMoneda(dashboard.resumen().ingresosTotales()));
         parametros.put("boletosVendidos", String.valueOf(dashboard.resumen().boletosVendidos()));
         parametros.put("precioPromedio", formatearMoneda(dashboard.resumen().precioPromedio()));

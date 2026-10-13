@@ -184,8 +184,9 @@ public final class CatalogClient {
 
     // ---- Reportes ----
 
-    public Dashboard obtenerDashboard(String token) {
-        HttpResponse<String> response = execute(newRequest("GET", "/reportes/dashboard", token, null));
+    public Dashboard obtenerDashboard(String token, FiltrosReporte filtros) {
+        HttpResponse<String> response = execute(
+                newRequest("GET", "/reportes/dashboard" + filtros.queryString(), token, null));
         try {
             return mapper.readValue(response.body(), Dashboard.class);
         } catch (IOException error) {

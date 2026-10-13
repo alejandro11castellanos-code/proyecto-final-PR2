@@ -4,6 +4,7 @@
               xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
               name="portada" pageWidth="595" pageHeight="842" columnWidth="535" leftMargin="30" rightMargin="30" topMargin="30" bottomMargin="30">
   <parameter name="subtitulo" class="java.lang.String"/>
+  <parameter name="filtros" class="java.lang.String"/>
   <parameter name="ingresosTotales" class="java.lang.String"/>
   <parameter name="boletosVendidos" class="java.lang.String"/>
   <parameter name="precioPromedio" class="java.lang.String"/>
@@ -51,6 +52,11 @@
         <reportElement x="370" y="100" width="165" height="26"/>
         <textElement><font size="16"/></textElement>
         <textFieldExpression><![CDATA[$P{precioPromedio}]]></textFieldExpression>
+      </textField>
+      <textField textAdjust="StretchHeight">
+        <reportElement x="0" y="136" width="535" height="20"/>
+        <textElement><font size="9" isItalic="true"/></textElement>
+        <textFieldExpression><![CDATA["Filtros aplicados: " + $P{filtros}]]></textFieldExpression>
       </textField>
     </band>
   </title>

@@ -97,6 +97,12 @@ mvn javafx:run
   reimprimir o reenviar los boletos de una venta pasada sin pantalla nueva.
 
 
+- **Filtros en reportes:** el dashboard y el PDF se pueden filtrar por rango
+  de fecha de compra, artista, concierto, vendedor y localidad (se combinan).
+  La portada del PDF indica qué filtros se aplicaron. La ocupación es una
+  foto del inventario, así que solo responde a artista, concierto y
+  localidad.
+
 - **Alerta de últimos boletos:** la columna "Disponibles" en Aforo y en el
   punto de venta resalta en naranja "¡Últimos N!" cuando quedan 10 boletos
   o menos de una localidad, y en rojo "AGOTADO" cuando llega a 0. Es un

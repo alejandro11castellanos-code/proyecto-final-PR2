@@ -1,14 +1,19 @@
 package gt.umg.svbgua;
 
+import gt.umg.svbgua.CatalogClient.Artista;
+import gt.umg.svbgua.CatalogClient.Concierto;
 import gt.umg.svbgua.CatalogClient.Dashboard;
+import gt.umg.svbgua.CatalogClient.Localidad;
 import gt.umg.svbgua.CatalogClient.Ocupacion;
 import gt.umg.svbgua.CatalogClient.VentaPorArtista;
 import gt.umg.svbgua.CatalogClient.VentaPorConcierto;
 import gt.umg.svbgua.CatalogClient.VentaPorDia;
 import gt.umg.svbgua.CatalogClient.VentaPorLocalidad;
+import gt.umg.svbgua.CatalogClient.Usuario;
 import gt.umg.svbgua.CatalogClient.VentaPorVendedor;
 import java.io.File;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import javafx.collections.FXCollections;
@@ -21,6 +26,8 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
@@ -57,6 +64,17 @@ public final class ReportesPane extends BorderPane {
     private final VBox contenido = new VBox(20);
     private final Button exportarButton = new Button("Exportar PDF");
     private Dashboard ultimoDashboard;
+    private String ultimaDescripcionFiltros = FiltrosReporte.NINGUNO.descripcion(null, null, null, null);
+
+    private final DatePicker desdePicker = new DatePicker();
+    private final DatePicker hastaPicker = new DatePicker();
+    private final ComboBox<OpcionFiltro<Integer>> artistaCombo = new ComboBox<>();
+    private final ComboBox<OpcionFiltro<Integer>> conciertoCombo = new ComboBox<>();
+    private final ComboBox<OpcionFiltro<Integer>> vendedorCombo = new ComboBox<>();
+    private final ComboBox<OpcionFiltro<Integer>> localidadCombo = new ComboBox<>();
+    private final Label resumenFiltros = new Label();
+    private List<Concierto> conciertos = List.of();
+    private FiltrosReporte filtrosAplicados = FiltrosReporte.NINGUNO;
 
     public ReportesPane(CatalogClient client, String token, String nombreCompleto) {
         this.client = client;
@@ -70,6 +88,7 @@ public final class ReportesPane extends BorderPane {
         scroll.setFitToWidth(true);
         setCenter(scroll);
 
+        cargarCatalogos();
         cargar();
     }
 
@@ -87,9 +106,132 @@ public final class ReportesPane extends BorderPane {
         HBox fila = new HBox(16, kpis, actualizarButton, exportarButton);
         fila.setAlignment(Pos.CENTER_LEFT);
 
+        resumenFiltros.setStyle("-fx-font-size: 11px; -fx-opacity: 0.8;");
+        resumenFiltros.setWrapText(true);
         status.setWrapText(true);
-        VBox top = new VBox(8, fila, status);
+        VBox top = new VBox(8, fila, buildFiltros(), resumenFiltros, status);
         return top;
+    }
+
+    private FlowPane buildFiltros() {
+        desdePicker.setPromptText("Desde");
+        hastaPicker.setPromptText("Hasta");
+        desdePicker.setPrefWidth(130);
+        hastaPicker.setPrefWidth(130);
+
+        inicializarCombo(artistaCombo, "Todos los artistas");
+        inicializarCombo(conciertoCombo, "Todos los conciertos");
+        inicializarCombo(vendedorCombo, "Todos los vendedores");
+        inicializarCombo(localidadCombo, "Todas las localidades");
+        // Al elegir artista, el combo de conciertos solo ofrece los suyos:
+        // así no se puede armar la combinación (artista A + concierto de B).
+        artistaCombo.valueProperty().addListener((obs, previo, actual) -> {
+            if (actual != null) {
+                actualizarConciertos();
+            }
+        });
+
+        Button aplicarButton = new Button("Aplicar filtros");
+        aplicarButton.setOnAction(event -> aplicarFiltros());
+        Button limpiarButton = new Button("Limpiar");
+        limpiarButton.setOnAction(event -> limpiarFiltros());
+
+        FlowPane filtros = new FlowPane(8, 8, new Label("Fecha de compra:"), desdePicker, hastaPicker,
+                artistaCombo, conciertoCombo, vendedorCombo, localidadCombo, aplicarButton, limpiarButton);
+        filtros.setAlignment(Pos.CENTER_LEFT);
+        return filtros;
+    }
+
+    private static void inicializarCombo(ComboBox<OpcionFiltro<Integer>> combo, String etiquetaTodos) {
+        combo.setPrefWidth(190);
+        combo.getItems().setAll(new OpcionFiltro<>(etiquetaTodos, null));
+        combo.getSelectionModel().selectFirst();
+    }
+
+    private void cargarCatalogos() {
+        Async.run(() -> client.listArtistas(token),
+                lista -> llenarCombo(artistaCombo, "Todos los artistas", lista, Artista::nombreArtistico,
+                        Artista::idArtista),
+                error -> status.setText(error));
+        Async.run(() -> client.listConciertos(token),
+                lista -> {
+                    conciertos = lista;
+                    actualizarConciertos();
+                },
+                error -> status.setText(error));
+        // Todos los usuarios, no solo los 'vendedor': un administrador también puede vender
+        // y sus ventas cuentan en el ranking.
+        Async.run(() -> client.listUsuarios(token),
+                lista -> llenarCombo(vendedorCombo, "Todos los vendedores", lista,
+                        usuario -> usuario.nombreCompleto() + ("administrador".equals(usuario.rol()) ? " (admin)" : ""),
+                        Usuario::idUsuario),
+                error -> status.setText(error));
+        Async.run(() -> client.listLocalidades(token),
+                lista -> llenarCombo(localidadCombo, "Todas las localidades", lista, Localidad::nombre,
+                        Localidad::idLocalidad),
+                error -> status.setText(error));
+    }
+
+    private static <T> void llenarCombo(ComboBox<OpcionFiltro<Integer>> combo, String etiquetaTodos, List<T> datos,
+            java.util.function.Function<T, String> etiqueta, java.util.function.ToIntFunction<T> id) {
+        List<OpcionFiltro<Integer>> opciones = new ArrayList<>();
+        opciones.add(new OpcionFiltro<>(etiquetaTodos, null));
+        for (T dato : datos) {
+            opciones.add(new OpcionFiltro<>(etiqueta.apply(dato), id.applyAsInt(dato)));
+        }
+        combo.getItems().setAll(opciones);
+        combo.getSelectionModel().selectFirst();
+    }
+
+    private void actualizarConciertos() {
+        Integer idArtista = valor(artistaCombo);
+        List<OpcionFiltro<Integer>> opciones = new ArrayList<>();
+        opciones.add(new OpcionFiltro<>("Todos los conciertos", null));
+        for (Concierto concierto : conciertos) {
+            if (idArtista == null || concierto.idArtista() == idArtista) {
+                opciones.add(new OpcionFiltro<>(concierto.tituloEvento(), concierto.idConcierto()));
+            }
+        }
+        conciertoCombo.getItems().setAll(opciones);
+        conciertoCombo.getSelectionModel().selectFirst();
+    }
+
+    private static Integer valor(ComboBox<OpcionFiltro<Integer>> combo) {
+        OpcionFiltro<Integer> opcion = combo.getValue();
+        return opcion == null ? null : opcion.valor();
+    }
+
+    private static String etiqueta(ComboBox<OpcionFiltro<Integer>> combo) {
+        OpcionFiltro<Integer> opcion = combo.getValue();
+        return opcion == null ? null : opcion.etiqueta();
+    }
+
+    private void aplicarFiltros() {
+        LocalDate desde = desdePicker.getValue();
+        LocalDate hasta = hastaPicker.getValue();
+        if (desde != null && hasta != null && desde.isAfter(hasta)) {
+            status.setText("La fecha \"Desde\" no puede ser posterior a \"Hasta\".");
+            return;
+        }
+        filtrosAplicados = new FiltrosReporte(desde, hasta, valor(artistaCombo), valor(conciertoCombo),
+                valor(vendedorCombo), valor(localidadCombo));
+        cargar();
+    }
+
+    private void limpiarFiltros() {
+        desdePicker.setValue(null);
+        hastaPicker.setValue(null);
+        artistaCombo.getSelectionModel().selectFirst();
+        actualizarConciertos();
+        vendedorCombo.getSelectionModel().selectFirst();
+        localidadCombo.getSelectionModel().selectFirst();
+        filtrosAplicados = FiltrosReporte.NINGUNO;
+        cargar();
+    }
+
+    private String describir(FiltrosReporte filtros) {
+        return filtros.descripcion(etiqueta(artistaCombo), etiqueta(conciertoCombo), etiqueta(vendedorCombo),
+                etiqueta(localidadCombo));
     }
 
     private VBox tarjetaKpi(String titulo, Label valor) {
@@ -104,9 +246,13 @@ public final class ReportesPane extends BorderPane {
 
     private void cargar() {
         status.setText("Cargando...");
+        // La descripción se fija junto con la petición: si el usuario cambia los combos
+        // mientras carga, el PDF debe describir los filtros del dashboard que se ve.
+        FiltrosReporte filtros = filtrosAplicados;
+        String descripcion = describir(filtros);
         Async.run(
-                () -> client.obtenerDashboard(token),
-                this::mostrar,
+                () -> client.obtenerDashboard(token, filtros),
+                dashboard -> mostrar(dashboard, descripcion, filtros.hayFiltros()),
                 error -> status.setText(error));
     }
 
@@ -126,12 +272,13 @@ public final class ReportesPane extends BorderPane {
         }
 
         Dashboard dashboard = ultimoDashboard;
+        String descripcion = ultimaDescripcionFiltros;
         exportarButton.setDisable(true);
         status.setText("Generando PDF...");
         Async.run(
                 () -> {
                     try {
-                        ReporteVentasService.generar(dashboard, nombreCompleto, destino);
+                        ReporteVentasService.generar(dashboard, nombreCompleto, descripcion, destino);
                         return destino;
                     } catch (JRException error) {
                         throw new RuntimeException(error.getMessage(), error);
@@ -147,9 +294,11 @@ public final class ReportesPane extends BorderPane {
                 });
     }
 
-    private void mostrar(Dashboard dashboard) {
+    private void mostrar(Dashboard dashboard, String descripcionFiltros, boolean conFiltros) {
         status.setText("");
         ultimoDashboard = dashboard;
+        ultimaDescripcionFiltros = descripcionFiltros;
+        resumenFiltros.setText(conFiltros ? "Filtros aplicados: " + descripcionFiltros : "");
         exportarButton.setDisable(false);
         kpiIngresos.setText(formatearMoneda(dashboard.resumen().ingresosTotales()));
         kpiBoletos.setText(String.valueOf(dashboard.resumen().boletosVendidos()));
@@ -168,7 +317,7 @@ public final class ReportesPane extends BorderPane {
                 barras,
                 seccion("Ventas por día", lineChartPorDia(dashboard.porDia())),
                 seccion("Boletos por localidad", pieChartLocalidad(dashboard.porLocalidad())),
-                seccion("Ocupación por concierto", ocupacionPane(dashboard.ocupacion())));
+                seccion("Ocupación por concierto (inventario actual: no depende de fechas ni vendedor)", ocupacionPane(dashboard.ocupacion())));
     }
 
     private VBox seccion(String titulo, javafx.scene.Node grafico) {

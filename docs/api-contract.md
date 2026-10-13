@@ -304,6 +304,32 @@ Una sola llamada trae las siete secciones que arma el dashboard:
 }
 ```
 
+### Filtros (query string, todos opcionales)
+
+`GET /reportes/dashboard?desde=2026-09-01&hasta=2026-09-30&artista=1&concierto=2&vendedor=3&localidad=4`
+
+| Parámetro | Formato | Efecto |
+|-----------|---------|--------|
+| `desde`, `hasta` | `AAAA-MM-DD` (inclusivos; se comparan por día de `fecha_venta`) | Solo ventas dentro del rango |
+| `artista`, `concierto`, `vendedor`, `localidad` | id entero positivo | Solo ventas de ese artista / concierto / vendedor / localidad |
+
+Los filtros se combinan con AND. Un parámetro presente pero inválido
+(fecha mal formada o inexistente, `desde` > `hasta`, id no numérico, cero,
+negativo o vacío) responde `400` con `{ "error": "..." }`; nunca se ignora
+en silencio. Una combinación sin ventas (p. ej. un concierto de otro
+artista) responde `200` con ceros, no error. Sin parámetros el resultado es
+idéntico al anterior a los filtros (verificado contra Neon: las 7 consultas
+coinciden fila por fila).
+
+Cómo se aplican: las ventas se filtran en un CTE `hechos` (una fila por
+renglón vendido) y las dimensiones (conciertos, artistas, vendedores,
+localidades) se le unen con `LEFT JOIN`, así que un concierto sin ventas en
+el rango sigue apareciendo en cero. `por_vendedor` suma los subtotales de
+los renglones que cumplen el filtro (no `total_venta`) para que un filtro
+por concierto o localidad no atribuya al vendedor renglones ajenos.
+**`ocupacion` es una foto del inventario**, no un acumulado de ventas: solo
+responde a `artista`, `concierto` y `localidad`; ignora fechas y vendedor.
+
 `por_vendedor` **no filtra por rol**: cualquier usuario autenticado puede
 vender (incluido un administrador probando el punto de venta), así que se
 agregan todas las ventas por `id_vendedor` sin importar el rol de quien las
