@@ -141,7 +141,10 @@ public final class VentaPane extends BorderPane {
         agregarButton.setDisable(true);
         agregarButton.setOnAction(event -> agregarAlCarrito());
 
-        HBox controles = new HBox(8, new Label("Cantidad"), cantidadSpinner, agregarButton);
+        Label cantidadLabel = new Label("Cantidad");
+        cantidadLabel.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
+        agregarButton.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
+        HBox controles = new HBox(8, cantidadLabel, cantidadSpinner, agregarButton);
         controles.setAlignment(Pos.CENTER_LEFT);
 
         VBox box = new VBox(8, new Label("Disponibilidad"), disponibilidadTable, controles);
@@ -169,7 +172,12 @@ public final class VentaPane extends BorderPane {
         confirmarButton.setOnAction(event -> confirmarVenta());
         vaciarButton.setOnAction(event -> vaciarCarrito());
 
-        HBox botones = new HBox(8, quitarButton, vaciarButton, confirmarButton);
+        // Un botón nunca se trunca ("Confirmar ve..."): si no caben en una línea, bajan a la siguiente.
+        for (Button boton : List.of(quitarButton, vaciarButton, confirmarButton)) {
+            boton.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
+        }
+        javafx.scene.layout.FlowPane botones = new javafx.scene.layout.FlowPane(8, 8, quitarButton, vaciarButton,
+                confirmarButton);
         botones.setAlignment(Pos.CENTER_LEFT);
 
         VBox box = new VBox(8, new Label("Carrito"), carritoTable, totalLabel, botones);
@@ -183,12 +191,25 @@ public final class VentaPane extends BorderPane {
                 status::setText);
     }
 
+    void actualizar() {
+        Concierto actual = conciertoCombo.getValue();
+        if (actual != null) {
+            cargarDisponibilidad(actual.idConcierto(), status.getText());
+        }
+    }
+
     private void cargarDisponibilidad(int idConcierto) {
+        cargarDisponibilidad(idConcierto, "");
+    }
+
+    // `mensajeFinal` es lo que queda en el estado al terminar la recarga: así la confirmación
+    // de una venta no se borra cuando llega la nueva disponibilidad.
+    private void cargarDisponibilidad(int idConcierto, String mensajeFinal) {
         Async.run(
                 () -> client.listInventario(token, idConcierto),
                 lista -> {
                     disponibilidad.setAll(lista);
-                    status.setText("");
+                    status.setText(mensajeFinal);
                 },
                 status::setText);
     }
@@ -268,11 +289,12 @@ public final class VentaPane extends BorderPane {
         Async.run(
                 () -> client.crearVenta(token, items),
                 venta -> {
-                    status.setText("Venta #" + venta.idVenta() + " registrada. Total: "
-                            + formatearMoneda(venta.totalVenta()) + ".");
+                    String confirmacion = "Venta #" + venta.idVenta() + " registrada. Total: "
+                            + formatearMoneda(venta.totalVenta()) + ".";
                     vaciarCarrito();
+                    status.setText(confirmacion);
                     if (conciertoActual != null) {
-                        cargarDisponibilidad(conciertoActual.idConcierto());
+                        cargarDisponibilidad(conciertoActual.idConcierto(), confirmacion);
                     }
                     BoletosDialog.mostrar(getScene().getWindow(), client, token, venta.idVenta());
                 },

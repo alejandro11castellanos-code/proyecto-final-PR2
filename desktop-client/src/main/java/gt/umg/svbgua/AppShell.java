@@ -22,7 +22,11 @@ import javafx.scene.layout.VBox;
  */
 class AppShell extends BorderPane {
 
-    record Seccion(String titulo, Node contenido) {
+    /** {@code alMostrar} (opcional) se ejecuta cada vez que se abre la sección, para refrescar datos viejos. */
+    record Seccion(String titulo, Node contenido, Runnable alMostrar) {
+        Seccion(String titulo, Node contenido) {
+            this(titulo, contenido, null);
+        }
     }
 
     private final Label tituloPagina = new Label();
@@ -132,6 +136,9 @@ class AppShell extends BorderPane {
         tituloPagina.setText(seccion.titulo());
         contenido.getChildren().setAll(seccion.contenido());
         Animaciones.cambioDeVista(seccion.contenido());
+        if (seccion.alMostrar() != null) {
+            seccion.alMostrar().run();
+        }
     }
 
     static String iniciales(String nombreCompleto) {
