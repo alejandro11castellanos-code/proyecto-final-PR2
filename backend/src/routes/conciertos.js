@@ -6,9 +6,21 @@ function isBlank(value) {
   return typeof value !== 'string' || !value.trim();
 }
 
-function parseFecha(value) {
-  const fecha = new Date(value);
-  return Number.isNaN(fecha.getTime()) ? null : fecha;
+const FECHA_HORA = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?$/;
+
+// Fecha y hora LOCAL (Guatemala), sin zona: "2026-11-15T20:00[:00]". Un valor con Z o con
+// desplazamiento se rechaza en vez de aceptarse: la columna no guarda zona, así que la
+// hora se corría sin avisar. Devuelve "AAAA-MM-DDTHH:mm:ss" o null si no es válida.
+function normalizarFechaHora(value) {
+  const partes = typeof value === 'string' ? FECHA_HORA.exec(value.trim()) : null;
+  if (!partes) return null;
+
+  const [anio, mes, dia, hora, minuto, segundo] = partes.slice(1).map((parte) => Number(parte ?? 0));
+  const fecha = new Date(Date.UTC(anio, mes - 1, dia, hora, minuto, segundo));
+  const coincide = fecha.getUTCFullYear() === anio && fecha.getUTCMonth() === mes - 1
+    && fecha.getUTCDate() === dia && fecha.getUTCHours() === hora && fecha.getUTCMinutes() === minuto
+    && fecha.getUTCSeconds() === segundo;
+  return coincide ? fecha.toISOString().slice(0, 19) : null;
 }
 
 export function createConciertoRouter({ conciertoRepository, artistaRepository, jwtSecret }) {
@@ -36,9 +48,11 @@ export function createConciertoRouter({ conciertoRepository, artistaRepository, 
       return { error: `estado debe ser uno de: ${ESTADOS_VALIDOS.join(', ')}.` };
     }
 
-    const fecha = parseFecha(fecha_concierto);
+    const fecha = normalizarFechaHora(fecha_concierto);
     if (!fecha) {
-      return { error: 'fecha_concierto no es una fecha válida.' };
+      return {
+        error: 'fecha_concierto debe tener formato AAAA-MM-DDTHH:mm (hora local de Guatemala, sin zona horaria).',
+      };
     }
 
     const artista = await artistaRepository.findById(Number(id_artista));
@@ -50,7 +64,7 @@ export function createConciertoRouter({ conciertoRepository, artistaRepository, 
       data: {
         id_artista: Number(id_artista),
         titulo_evento: titulo_evento.trim(),
-        fecha_concierto: fecha.toISOString(),
+        fecha_concierto: fecha,
         recinto: recinto.trim(),
         estado: estado ?? null,
       },
