@@ -39,7 +39,7 @@ public class App extends Application {
             return;
         }
         cambiarEscena(stage, new VendedorView(catalogClient, token, usuario.nombreCompleto(), cerrarSesion),
-                1100, 700, "SVB-GUA — Punto de venta");
+                1200, 720, "SVB-GUA — Punto de venta");
     }
 
     private static void cambiarEscena(Stage stage, Parent raiz, double ancho, double alto, String titulo) {

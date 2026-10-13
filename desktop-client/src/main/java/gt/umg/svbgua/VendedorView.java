@@ -6,8 +6,14 @@ import java.util.List;
 public final class VendedorView extends AppShell {
 
     public VendedorView(CatalogClient client, String token, String nombreCompleto, Runnable cerrarSesion) {
-        super("Punto de venta", nombreCompleto, "Vendedor", List.of(
-                new Seccion("Vender", new VentaPane(client, token)),
-                new Seccion("Mis ventas", new HistorialPane(client, token, false))), cerrarSesion);
+        super("Punto de venta", nombreCompleto, "Vendedor", secciones(client, token), cerrarSesion);
+    }
+
+    private static List<Seccion> secciones(CatalogClient client, String token) {
+        VentaPane ventas = new VentaPane(client, token);
+        HistorialPane historial = new HistorialPane(client, token, false);
+        return List.of(
+                new Seccion("Vender", ventas, ventas::actualizar),
+                new Seccion("Mis ventas", historial, historial::actualizar));
     }
 }

@@ -182,6 +182,13 @@ public final class InventarioPane extends BorderPane {
                 status::setText);
     }
 
+    void actualizar() {
+        Concierto actual = conciertoCombo.getValue();
+        if (actual != null) {
+            cargarInventario(actual.idConcierto());
+        }
+    }
+
     private void cargarInventario(int idConcierto) {
         Async.run(
                 () -> client.listInventario(token, idConcierto),

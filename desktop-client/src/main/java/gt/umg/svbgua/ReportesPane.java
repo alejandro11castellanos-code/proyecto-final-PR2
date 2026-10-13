@@ -257,6 +257,10 @@ public final class ReportesPane extends BorderPane {
         return tarjeta;
     }
 
+    void actualizar() {
+        cargar();
+    }
+
     private void cargar() {
         status.setText("Cargando...");
         // La descripción se fija junto con la petición: si el usuario cambia los combos

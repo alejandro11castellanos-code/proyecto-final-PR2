@@ -166,6 +166,10 @@ public final class HistorialPane extends BorderPane {
                 status::setText);
     }
 
+    void actualizar() {
+        cargar();
+    }
+
     private void cargar() {
         status.setText("Cargando...");
         Integer idVendedor = esAdmin && vendedorCombo.getValue() != null ? vendedorCombo.getValue().idUsuario() : null;
