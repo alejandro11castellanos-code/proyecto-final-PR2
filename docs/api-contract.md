@@ -347,8 +347,10 @@ el reporte exportable/imprimible aparte (PDF), no para esta pantalla.
 
 El botón "Exportar PDF" del dashboard (`ReportesPane`) arma el mismo
 `Dashboard` que ya se graficó y se lo pasa a `ReporteVentasService`, que
-compila y llena cuatro plantillas JRXML (portada con KPIs, por concierto,
-por artista, por vendedor) y las concatena en un solo PDF vía
+compila y llena seis plantillas JRXML (portada con KPIs y, por cada corte,
+una gráfica JasperReports/JFreeChart más su tabla: concierto, artista y
+vendedor en barras, ventas por día en línea y boletos por localidad en
+pastel) y las concatena en un solo PDF vía
 `JRPdfExporter` — no son subreports XML, son cuatro `JasperPrint`
 independientes fusionados al exportar, más simple de mantener sin un
 diseñador visual.
@@ -364,4 +366,12 @@ mutable (JasperReports hace `.put()` internamente; `Map.of()` explota con
 Se fijó la dependencia en `jasperreports:6.21.4` a propósito: la rama 7.x
 migró de `javax` a `jakarta`, y este proyecto no tiene nada de eso — 6.21.x
 es la última versión antes de ese cambio. Verificado generando un PDF real
-de 4 páginas contra el dashboard de datos reales en Neon.
+de 6 páginas contra el dashboard de datos reales en Neon, renderizado a
+imagen para revisar las gráficas, y también ejecutándolo con el toolkit de
+JavaFX activo (las gráficas usan AWT; no hubo choque).
+
+Dos detalles de las gráficas: JFreeChart recorta a "..." las etiquetas del
+eje X más anchas que su categoría, y Jasper no expone ese ajuste en el XML,
+por eso `por_dia.jrxml` usa `EtiquetasVerticalesCustomizer` (rota las
+etiquetas). Y cuando no hay ventas con los filtros elegidos la gráfica se
+oculta (`hayDatos`) y se imprime un aviso, en vez de ejes vacíos con "-0".
