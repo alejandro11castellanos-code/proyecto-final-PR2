@@ -44,6 +44,7 @@ public final class UsuariosPane extends BorderPane {
     private final TextField nombreCompletoField = new TextField();
     private final ComboBox<String> rolCombo = new ComboBox<>(FXCollections.observableArrayList(ROLES));
     private final Label status = new Label();
+    private final Label tituloForm = new Label("Nuevo usuario");
     private final Button guardarButton = new Button("Guardar");
     private final Button eliminarButton = new Button("Eliminar");
     private final Button restablecerButton = new Button("Restablecer contraseña");
@@ -53,8 +54,7 @@ public final class UsuariosPane extends BorderPane {
         this.client = client;
         this.token = token;
         setPadding(new Insets(16));
-        setCenter(buildTablaConBuscador());
-        setBottom(buildForm());
+        setCenter(Formulario.lado(buildTablaConBuscador(), buildForm()));
         cargar();
     }
 
@@ -95,10 +95,10 @@ public final class UsuariosPane extends BorderPane {
     }
 
     private VBox buildForm() {
-        nombreUsuarioField.setPromptText("Usuario (login)");
-        contrasenaField.setPromptText("Contraseña (mínimo 6 caracteres)");
-        nombreCompletoField.setPromptText("Nombre completo");
-        rolCombo.setPromptText("Rol");
+        nombreUsuarioField.setPromptText("Ej. vendedor3");
+        contrasenaField.setPromptText("Mínimo 6 caracteres");
+        nombreCompletoField.setPromptText("Nombre y apellido");
+        rolCombo.setPromptText("Seleccione");
 
         Button nuevoButton = new Button("Nuevo");
         nuevoButton.setOnAction(event -> limpiarSeleccion());
@@ -108,17 +108,24 @@ public final class UsuariosPane extends BorderPane {
         restablecerButton.setOnAction(event -> restablecerContrasena());
         restablecerButton.setDisable(true);
 
-        HBox botones = new HBox(8, nuevoButton, guardarButton, eliminarButton, restablecerButton);
-        botones.setAlignment(Pos.CENTER_LEFT);
         status.setWrapText(true);
+        nuevoButton.getStyleClass().add("secondary");
+        eliminarButton.getStyleClass().add("danger");
+        restablecerButton.getStyleClass().add("secondary");
+        status.setWrapText(true);
+        Tema.ocultarSiVacia(status);
 
-        VBox form = new VBox(8, nombreUsuarioField, contrasenaField, nombreCompletoField, rolCombo, botones, status);
-        form.setPadding(new Insets(12, 0, 0, 0));
-        return form;
+        return Formulario.tarjeta(tituloForm, "Seleccione un usuario de la tabla o cree uno nuevo.",
+                Formulario.dosColumnas(Formulario.campo("Usuario", nombreUsuarioField), Formulario.campo("Rol", rolCombo)),
+                Formulario.campo("Nombre completo", nombreCompletoField),
+                Formulario.campo("Contraseña", contrasenaField),
+                Formulario.botones(guardarButton, nuevoButton, eliminarButton, restablecerButton),
+                status);
     }
 
     private void seleccionar(Usuario usuario) {
         seleccionado = usuario;
+        tituloForm.setText(usuario == null ? "Nuevo usuario" : "Editar usuario");
         eliminarButton.setDisable(usuario == null);
         restablecerButton.setDisable(usuario == null);
         // El nombre de usuario es el identificador de login: no se edita, solo
@@ -138,6 +145,7 @@ public final class UsuariosPane extends BorderPane {
     private void limpiarSeleccion() {
         table.getSelectionModel().clearSelection();
         seleccionado = null;
+        tituloForm.setText("Nuevo usuario");
         nombreUsuarioField.setDisable(false);
         contrasenaField.setDisable(false);
         nombreUsuarioField.clear();

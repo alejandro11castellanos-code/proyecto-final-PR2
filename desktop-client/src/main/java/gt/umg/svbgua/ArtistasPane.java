@@ -33,6 +33,7 @@ public final class ArtistasPane extends BorderPane {
     private final TextField generoField = new TextField();
     private final TextField paisField = new TextField();
     private final Label status = new Label();
+    private final Label tituloForm = new Label("Nuevo artista");
     private final Button guardarButton = new Button("Guardar");
     private final Button eliminarButton = new Button("Eliminar");
     private Artista seleccionado;
@@ -41,8 +42,7 @@ public final class ArtistasPane extends BorderPane {
         this.client = client;
         this.token = token;
         setPadding(new Insets(16));
-        setCenter(buildTablaConBuscador());
-        setBottom(buildForm());
+        setCenter(Formulario.lado(buildTablaConBuscador(), buildForm()));
         cargar();
     }
 
@@ -84,9 +84,9 @@ public final class ArtistasPane extends BorderPane {
     }
 
     private VBox buildForm() {
-        nombreField.setPromptText("Nombre artístico");
-        generoField.setPromptText("Género musical");
-        paisField.setPromptText("País de origen (opcional)");
+        nombreField.setPromptText("Ej. Los Miserables");
+        generoField.setPromptText("Ej. Rock");
+        paisField.setPromptText("Opcional");
 
         Button nuevoButton = new Button("Nuevo");
         nuevoButton.setOnAction(event -> limpiarSeleccion());
@@ -94,18 +94,23 @@ public final class ArtistasPane extends BorderPane {
         eliminarButton.setOnAction(event -> eliminar());
         eliminarButton.setDisable(true);
 
-        HBox botones = new HBox(8, nuevoButton, guardarButton, eliminarButton);
-        botones.setAlignment(Pos.CENTER_LEFT);
 
         status.setWrapText(true);
+        nuevoButton.getStyleClass().add("secondary");
+        eliminarButton.getStyleClass().add("danger");
+        status.setWrapText(true);
+        Tema.ocultarSiVacia(status);
 
-        VBox form = new VBox(8, nombreField, generoField, paisField, botones, status);
-        form.setPadding(new Insets(12, 0, 0, 0));
-        return form;
+        return Formulario.tarjeta(tituloForm, "Seleccione un artista de la tabla o cree uno nuevo.",
+                Formulario.campo("Nombre artístico", nombreField),
+                Formulario.dosColumnas(Formulario.campo("Género musical", generoField), Formulario.campo("País de origen", paisField)),
+                Formulario.botones(guardarButton, nuevoButton, eliminarButton),
+                status);
     }
 
     private void seleccionar(Artista artista) {
         seleccionado = artista;
+        tituloForm.setText(artista == null ? "Nuevo artista" : "Editar artista");
         eliminarButton.setDisable(artista == null);
         if (artista == null) {
             return;
@@ -118,6 +123,7 @@ public final class ArtistasPane extends BorderPane {
     private void limpiarSeleccion() {
         table.getSelectionModel().clearSelection();
         seleccionado = null;
+        tituloForm.setText("Nuevo artista");
         nombreField.clear();
         generoField.clear();
         paisField.clear();

@@ -559,3 +559,21 @@
 .spinner .decrement-arrow {
     -fx-background-color: #6c5ce7;
 }
+
+/* ---------- Botón destructivo ---------- */
+
+.button.danger {
+    -fx-background-color: white;
+    -fx-text-fill: #e5484d;
+    -fx-border-color: #f3c6c8;
+    -fx-border-radius: 9;
+    -fx-effect: none;
+}
+
+.button.danger:hover {
+    -fx-background-color: #fff1f1;
+}
+
+.button.danger:pressed {
+    -fx-background-color: #ffe3e3;
+}

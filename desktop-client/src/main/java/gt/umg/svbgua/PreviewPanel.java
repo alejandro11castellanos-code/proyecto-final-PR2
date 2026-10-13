@@ -50,6 +50,16 @@ public final class PreviewPanel extends VBox {
         getChildren().addAll(imagen, nombreArtista, tituloCancion, boton, status);
     }
 
+    /** Imagen de la portada actual (null mientras carga o si no hay), para quien quiera usarla de fondo. */
+    public javafx.beans.property.ObjectProperty<Image> imagenProperty() {
+        return imagen.imageProperty();
+    }
+
+    /** Verdadero mientras hay un artista cargado; permite ocultar el panel cuando está vacío. */
+    public javafx.beans.binding.BooleanBinding hayArtista() {
+        return nombreArtista.textProperty().isNotEmpty();
+    }
+
     /** Limpia el panel; se usa cuando no hay nada seleccionado. */
     public void limpiar() {
         detener();

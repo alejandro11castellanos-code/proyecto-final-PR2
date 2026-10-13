@@ -46,6 +46,7 @@ public final class VentaPane extends BorderPane {
     private final Button vaciarButton = new Button("Vaciar carrito");
     private final Label status = new Label();
     private final PreviewPanel previewPanel = new PreviewPanel();
+    private final FondoDifuminado fondo = new FondoDifuminado();
 
     public VentaPane(CatalogClient client, String token) {
         this.client = client;
@@ -53,10 +54,32 @@ public final class VentaPane extends BorderPane {
         setPadding(new Insets(16));
         setTop(buildSeleccionConcierto());
         setCenter(buildContenido());
+        previewPanel.getStyleClass().add("card");
+        previewPanel.setPadding(new Insets(14));
+        previewPanel.managedProperty().bind(previewPanel.hayArtista());
+        previewPanel.visibleProperty().bind(previewPanel.hayArtista());
+        BorderPane.setMargin(previewPanel, new Insets(0, 0, 0, 16));
+        previewPanel.setMaxHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
+        // Ancho fijo: si cambiara con el nombre del artista, las tablas se estirarían y encogerían al elegir concierto.
+        previewPanel.setMinWidth(168);
+        previewPanel.setPrefWidth(168);
+        previewPanel.setMaxWidth(168);
+        BorderPane.setAlignment(previewPanel, Pos.CENTER);
         setRight(previewPanel);
         status.setWrapText(true);
+        Tema.ocultarSiVacia(status);
         setBottom(status);
+
+        // La portada del concierto elegido, desenfocada, como fondo de toda la pantalla.
+        getChildren().add(0, fondo);
+        previewPanel.imagenProperty().addListener((obs, anterior, imagen) -> fondo.mostrar(imagen));
         cargarConciertos();
+    }
+
+    @Override
+    protected void layoutChildren() {
+        fondo.resizeRelocate(0, 0, getWidth(), getHeight());
+        super.layoutChildren();
     }
 
     private VBox buildSeleccionConcierto() {

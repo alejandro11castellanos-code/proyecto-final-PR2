@@ -30,6 +30,7 @@ public final class LocalidadesPane extends BorderPane {
 
     private final TextField nombreField = new TextField();
     private final Label status = new Label();
+    private final Label tituloForm = new Label("Nueva localidad");
     private final Button guardarButton = new Button("Guardar");
     private final Button eliminarButton = new Button("Eliminar");
     private Localidad seleccionado;
@@ -38,8 +39,7 @@ public final class LocalidadesPane extends BorderPane {
         this.client = client;
         this.token = token;
         setPadding(new Insets(16));
-        setCenter(buildTablaConBuscador());
-        setBottom(buildForm());
+        setCenter(Formulario.lado(buildTablaConBuscador(), buildForm()));
         cargar();
     }
 
@@ -72,7 +72,7 @@ public final class LocalidadesPane extends BorderPane {
     }
 
     private VBox buildForm() {
-        nombreField.setPromptText("Nombre de la localidad");
+        nombreField.setPromptText("Ej. VIP");
 
         Button nuevoButton = new Button("Nuevo");
         nuevoButton.setOnAction(event -> limpiarSeleccion());
@@ -80,17 +80,21 @@ public final class LocalidadesPane extends BorderPane {
         eliminarButton.setOnAction(event -> eliminar());
         eliminarButton.setDisable(true);
 
-        HBox botones = new HBox(8, nuevoButton, guardarButton, eliminarButton);
-        botones.setAlignment(Pos.CENTER_LEFT);
         status.setWrapText(true);
+        nuevoButton.getStyleClass().add("secondary");
+        eliminarButton.getStyleClass().add("danger");
+        status.setWrapText(true);
+        Tema.ocultarSiVacia(status);
 
-        VBox form = new VBox(8, nombreField, botones, status);
-        form.setPadding(new Insets(12, 0, 0, 0));
-        return form;
+        return Formulario.tarjeta(tituloForm, "Seleccione una localidad de la tabla o cree una nueva.",
+                Formulario.campo("Nombre de la localidad", nombreField),
+                Formulario.botones(guardarButton, nuevoButton, eliminarButton),
+                status);
     }
 
     private void seleccionar(Localidad localidad) {
         seleccionado = localidad;
+        tituloForm.setText(localidad == null ? "Nueva localidad" : "Editar localidad");
         eliminarButton.setDisable(localidad == null);
         nombreField.setText(localidad == null ? "" : localidad.nombre());
     }
@@ -98,6 +102,7 @@ public final class LocalidadesPane extends BorderPane {
     private void limpiarSeleccion() {
         table.getSelectionModel().clearSelection();
         seleccionado = null;
+        tituloForm.setText("Nueva localidad");
         nombreField.clear();
         eliminarButton.setDisable(true);
         status.setText("");
