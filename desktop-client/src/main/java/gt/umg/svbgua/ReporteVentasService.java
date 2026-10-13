@@ -4,6 +4,8 @@ import gt.umg.svbgua.CatalogClient.Dashboard;
 import gt.umg.svbgua.CatalogClient.Ocupacion;
 import gt.umg.svbgua.CatalogClient.VentaPorArtista;
 import gt.umg.svbgua.CatalogClient.VentaPorConcierto;
+import gt.umg.svbgua.CatalogClient.VentaPorDia;
+import gt.umg.svbgua.CatalogClient.VentaPorLocalidad;
 import gt.umg.svbgua.CatalogClient.VentaPorVendedor;
 import java.io.File;
 import java.io.IOException;
@@ -28,9 +30,8 @@ import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
 
 /**
  * Genera el reporte de ventas en PDF con JasperReports: portada con los KPIs
- * + tres tablas (por concierto, por artista, por vendedor) — los mismos tres
- * cortes que pide el enunciado original y que el dashboard en vivo ya
- * grafica. Cada sección es una plantilla JasperReports chica e
+ * + una tabla con su gráfica por cada corte (concierto, artista, vendedor,
+ * día y localidad) — los mismos que grafica el dashboard en vivo. Cada sección es una plantilla JasperReports chica e
  * independiente; se combinan al exportar en un solo PDF (vía
  * {@link JRPdfExporter}), en vez de usar subreports — más simple de
  * mantener a mano sin un diseñador visual.
@@ -52,7 +53,9 @@ public final class ReporteVentasService {
                 llenarPortada(dashboard, generadoPor, filtrosAplicados),
                 llenarPorConcierto(dashboard),
                 llenarPorArtista(dashboard),
-                llenarPorVendedor(dashboard));
+                llenarPorVendedor(dashboard),
+                llenarPorDia(dashboard),
+                llenarPorLocalidad(dashboard));
 
         JRPdfExporter exportador = new JRPdfExporter();
         exportador.setExporterInput(SimpleExporterInput.getInstance(secciones));
@@ -94,11 +97,13 @@ public final class ReporteVentasService {
             fila.put("ingresos", formatearMoneda(venta.ingresos()));
             fila.put("boletos", String.valueOf(venta.boletos()));
             fila.put("ocupacion", porcentaje);
+            fila.put("ingresosNum", Double.valueOf(venta.ingresos()));
             filas.add(fila);
         }
 
+        boolean hayDatos = dashboard.porConcierto().stream().anyMatch(v -> Double.parseDouble(v.ingresos()) > 0);
         JasperReport reporte = compilar("por_concierto.jrxml");
-        return JasperFillManager.fillReport(reporte, new HashMap<>(), new JRMapCollectionDataSource(filas));
+        return JasperFillManager.fillReport(reporte, parametrosConDatos(hayDatos), new JRMapCollectionDataSource(filas));
     }
 
     private static JasperPrint llenarPorArtista(Dashboard dashboard) throws JRException {
@@ -108,11 +113,13 @@ public final class ReporteVentasService {
             fila.put("artista", venta.nombreArtistico());
             fila.put("ingresos", formatearMoneda(venta.ingresos()));
             fila.put("boletos", String.valueOf(venta.boletos()));
+            fila.put("ingresosNum", Double.valueOf(venta.ingresos()));
             filas.add(fila);
         }
 
+        boolean hayDatos = dashboard.porArtista().stream().anyMatch(v -> Double.parseDouble(v.ingresos()) > 0);
         JasperReport reporte = compilar("por_artista.jrxml");
-        return JasperFillManager.fillReport(reporte, new HashMap<>(), new JRMapCollectionDataSource(filas));
+        return JasperFillManager.fillReport(reporte, parametrosConDatos(hayDatos), new JRMapCollectionDataSource(filas));
     }
 
     private static JasperPrint llenarPorVendedor(Dashboard dashboard) throws JRException {
@@ -123,11 +130,53 @@ public final class ReporteVentasService {
             fila.put("rol", venta.rol());
             fila.put("ingresos", formatearMoneda(venta.ingresos()));
             fila.put("ventas", String.valueOf(venta.ventas()));
+            fila.put("ingresosNum", Double.valueOf(venta.ingresos()));
             filas.add(fila);
         }
 
+        boolean hayDatos = dashboard.porVendedor().stream().anyMatch(v -> Double.parseDouble(v.ingresos()) > 0);
         JasperReport reporte = compilar("por_vendedor.jrxml");
-        return JasperFillManager.fillReport(reporte, new HashMap<>(), new JRMapCollectionDataSource(filas));
+        return JasperFillManager.fillReport(reporte, parametrosConDatos(hayDatos), new JRMapCollectionDataSource(filas));
+    }
+
+    private static JasperPrint llenarPorDia(Dashboard dashboard) throws JRException {
+        List<Map<String, ?>> filas = new ArrayList<>();
+        for (VentaPorDia venta : dashboard.porDia()) {
+            Map<String, Object> fila = new HashMap<>();
+            fila.put("dia", venta.dia());
+            // AAAA-MM-DD → DD/MM: la fecha completa no cabe en el eje X y JFreeChart la recorta a "...".
+            fila.put("diaCorto", venta.dia().substring(8, 10) + "/" + venta.dia().substring(5, 7));
+            fila.put("ingresos", formatearMoneda(venta.ingresos()));
+            fila.put("boletos", String.valueOf(venta.boletos()));
+            fila.put("ingresosNum", Double.valueOf(venta.ingresos()));
+            filas.add(fila);
+        }
+
+        boolean hayDatos = dashboard.porDia().stream().anyMatch(v -> Double.parseDouble(v.ingresos()) > 0);
+        JasperReport reporte = compilar("por_dia.jrxml");
+        return JasperFillManager.fillReport(reporte, parametrosConDatos(hayDatos), new JRMapCollectionDataSource(filas));
+    }
+
+    private static JasperPrint llenarPorLocalidad(Dashboard dashboard) throws JRException {
+        List<Map<String, ?>> filas = new ArrayList<>();
+        for (VentaPorLocalidad venta : dashboard.porLocalidad()) {
+            Map<String, Object> fila = new HashMap<>();
+            fila.put("localidad", venta.nombre());
+            fila.put("boletos", String.valueOf(venta.boletos()));
+            fila.put("boletosNum", venta.boletos());
+            filas.add(fila);
+        }
+
+        boolean hayDatos = dashboard.porLocalidad().stream().anyMatch(v -> v.boletos() > 0);
+        JasperReport reporte = compilar("por_localidad.jrxml");
+        return JasperFillManager.fillReport(reporte, parametrosConDatos(hayDatos), new JRMapCollectionDataSource(filas));
+    }
+
+    // Mutable a propósito: JasperReports le hace put() internamente.
+    private static Map<String, Object> parametrosConDatos(boolean hayDatos) {
+        Map<String, Object> parametros = new HashMap<>();
+        parametros.put("hayDatos", hayDatos);
+        return parametros;
     }
 
     private static JasperReport compilar(String recurso) throws JRException {

@@ -49,6 +49,13 @@ import net.sf.jasperreports.engine.JRException;
  */
 public final class ReportesPane extends BorderPane {
 
+    // Paleta categórica (Tableau 10): una gráfica de una sola serie pinta todas
+    // las barras igual, así que cada barra/porción/tarjeta toma su color por índice.
+    private static final String[] PALETA = {
+        "#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F",
+        "#EDC948", "#B07AA1", "#FF9DA7", "#9C755F", "#BAB0AC",
+    };
+
     private static final double ANCHO_BARRA_ANGOSTA = 430;
     // Casi el ancho de dos angostas + el espacio entre ellas (430*2 + 16).
     private static final double ANCHO_BARRA_ANCHA = 876;
@@ -330,8 +337,10 @@ public final class ReportesPane extends BorderPane {
     private BarChart<String, Number> barChartIngresos(List<VentaPorConcierto> filas) {
         BarChart<String, Number> chart = nuevoBarChart("Ingresos (Q)");
         XYChart.Series<String, Number> serie = new XYChart.Series<>();
+        int indice = 0;
         for (VentaPorConcierto fila : filas) {
             XYChart.Data<String, Number> punto = new XYChart.Data<>(fila.tituloEvento(), Double.parseDouble(fila.ingresos()));
+            colorear(punto, indice++);
             instalarTooltip(punto, fila.tituloEvento() + "\n" + formatearMoneda(fila.ingresos())
                     + " · " + fila.boletos() + " boletos");
             serie.getData().add(punto);
@@ -343,9 +352,11 @@ public final class ReportesPane extends BorderPane {
     private BarChart<String, Number> barChartArtista(List<VentaPorArtista> filas, double ancho) {
         BarChart<String, Number> chart = nuevoBarChart("Ingresos (Q)", ancho);
         XYChart.Series<String, Number> serie = new XYChart.Series<>();
+        int indice = 0;
         for (VentaPorArtista fila : filas) {
             XYChart.Data<String, Number> punto =
                     new XYChart.Data<>(fila.nombreArtistico(), Double.parseDouble(fila.ingresos()));
+            colorear(punto, indice++);
             instalarTooltip(punto, fila.nombreArtistico() + "\n" + formatearMoneda(fila.ingresos())
                     + " · " + fila.boletos() + " boletos");
             serie.getData().add(punto);
@@ -357,9 +368,11 @@ public final class ReportesPane extends BorderPane {
     private BarChart<String, Number> barChartVendedor(List<VentaPorVendedor> filas) {
         BarChart<String, Number> chart = nuevoBarChart("Ingresos (Q)");
         XYChart.Series<String, Number> serie = new XYChart.Series<>();
+        int indice = 0;
         for (VentaPorVendedor fila : filas) {
             String etiqueta = fila.nombreCompleto() + ("administrador".equals(fila.rol()) ? " (admin)" : "");
             XYChart.Data<String, Number> punto = new XYChart.Data<>(etiqueta, Double.parseDouble(fila.ingresos()));
+            colorear(punto, indice++);
             instalarTooltip(punto, etiqueta + "\n" + formatearMoneda(fila.ingresos())
                     + " · " + fila.ventas() + " ventas");
             serie.getData().add(punto);
@@ -395,10 +408,40 @@ public final class ReportesPane extends BorderPane {
         PieChart chart = new PieChart(FXCollections.observableArrayList(datos));
         chart.setPrefHeight(280);
 
+        int indice = 0;
         for (PieChart.Data dato : datos) {
+            colorear(dato, indice++);
             instalarTooltip(dato, dato.getName() + "\n" + (int) dato.getPieValue() + " boletos");
         }
         return chart;
+    }
+
+    private static String color(int indice) {
+        return PALETA[indice % PALETA.length];
+    }
+
+    private static void colorear(XYChart.Data<?, ?> punto, int indice) {
+        String estilo = "-fx-bar-fill: " + color(indice) + ";";
+        if (punto.getNode() != null) {
+            punto.getNode().setStyle(estilo);
+        }
+        punto.nodeProperty().addListener((obs, anterior, nuevo) -> {
+            if (nuevo != null) {
+                nuevo.setStyle(estilo);
+            }
+        });
+    }
+
+    private static void colorear(PieChart.Data porcion, int indice) {
+        String estilo = "-fx-pie-color: " + color(indice) + ";";
+        if (porcion.getNode() != null) {
+            porcion.getNode().setStyle(estilo);
+        }
+        porcion.nodeProperty().addListener((obs, anterior, nuevo) -> {
+            if (nuevo != null) {
+                nuevo.setStyle(estilo);
+            }
+        });
     }
 
     /** Instala un tooltip en el nodo de un punto/barra, esperando a que exista si todavía no se creó. */
@@ -431,13 +474,14 @@ public final class ReportesPane extends BorderPane {
 
     private FlowPane ocupacionPane(List<Ocupacion> filas) {
         FlowPane pane = new FlowPane(16, 16);
+        int indice = 0;
         for (Ocupacion fila : filas) {
-            pane.getChildren().add(tarjetaOcupacion(fila));
+            pane.getChildren().add(tarjetaOcupacion(fila, indice++));
         }
         return pane;
     }
 
-    private VBox tarjetaOcupacion(Ocupacion fila) {
+    private VBox tarjetaOcupacion(Ocupacion fila, int indice) {
         double porcentaje = fila.cantidadTotal() > 0 ? (double) fila.vendido() / fila.cantidadTotal() : 0;
 
         Label titulo = new Label(fila.tituloEvento());
@@ -446,6 +490,7 @@ public final class ReportesPane extends BorderPane {
 
         ProgressBar barra = new ProgressBar(porcentaje);
         barra.setPrefWidth(180);
+        barra.setStyle("-fx-accent: " + color(indice) + ";");
 
         Label detalle = new Label(fila.vendido() + " / " + fila.cantidadTotal()
                 + String.format(Locale.of("es", "GT"), " (%.0f%%)", porcentaje * 100));

@@ -3,16 +3,54 @@
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
               name="por_vendedor" pageWidth="595" pageHeight="842" columnWidth="535" leftMargin="30" rightMargin="30" topMargin="30" bottomMargin="30">
+  <parameter name="hayDatos" class="java.lang.Boolean"/>
   <field name="vendedor" class="java.lang.String"/>
   <field name="rol" class="java.lang.String"/>
   <field name="ingresos" class="java.lang.String"/>
   <field name="ventas" class="java.lang.String"/>
+  <field name="ingresosNum" class="java.lang.Double"/>
   <title>
-    <band height="28">
+    <band height="250">
       <staticText>
         <reportElement x="0" y="0" width="535" height="24"/>
         <textElement><font size="15" isBold="true"/></textElement>
         <text><![CDATA[Ranking de vendedores]]></text>
+      </staticText>
+          <barChart>
+        <chart evaluationTime="Report">
+          <reportElement x="0" y="30" width="535" height="214"><printWhenExpression><![CDATA[$P{hayDatos}]]></printWhenExpression></reportElement>
+          <chartLegend/>
+        </chart>
+        <categoryDataset>
+          <categorySeries>
+            <seriesExpression><![CDATA[$F{vendedor}]]></seriesExpression>
+            <categoryExpression><![CDATA[" "]]></categoryExpression>
+            <valueExpression><![CDATA[$F{ingresosNum}]]></valueExpression>
+          </categorySeries>
+        </categoryDataset>
+        <barPlot isShowLabels="false">
+          <plot>
+            <seriesColor seriesOrder="0" color="#4E79A7"/>
+            <seriesColor seriesOrder="1" color="#F28E2B"/>
+            <seriesColor seriesOrder="2" color="#E15759"/>
+            <seriesColor seriesOrder="3" color="#76B7B2"/>
+            <seriesColor seriesOrder="4" color="#59A14F"/>
+            <seriesColor seriesOrder="5" color="#EDC948"/>
+            <seriesColor seriesOrder="6" color="#B07AA1"/>
+            <seriesColor seriesOrder="7" color="#FF9DA7"/>
+            <seriesColor seriesOrder="8" color="#9C755F"/>
+            <seriesColor seriesOrder="9" color="#BAB0AC"/>
+          </plot>
+          <valueAxisLabelExpression><![CDATA["Ingresos (Q)"]]></valueAxisLabelExpression>
+          <valueAxisFormat><axisFormat tickLabelMask="#,##0"/></valueAxisFormat>
+        </barPlot>
+      </barChart>
+          <staticText>
+        <reportElement x="0" y="30" width="535" height="40">
+          <printWhenExpression><![CDATA[!$P{hayDatos}]]></printWhenExpression>
+        </reportElement>
+        <textElement><font size="11" isItalic="true"/></textElement>
+        <text><![CDATA[No hay ventas para los filtros seleccionados.]]></text>
       </staticText>
     </band>
   </title>
@@ -20,25 +58,25 @@
     <band height="20">
       <staticText>
         <reportElement x="0" y="0" width="220" height="20" backcolor="#EEEEEE" mode="Opaque"/>
-        <box><pen lineWidth="0.5"/></box>
+        <box leftPadding="4" rightPadding="4"><pen lineWidth="0.5"/></box>
         <textElement><font isBold="true" size="9"/></textElement>
         <text><![CDATA[Vendedor]]></text>
       </staticText>
       <staticText>
         <reportElement x="220" y="0" width="100" height="20" backcolor="#EEEEEE" mode="Opaque"/>
-        <box><pen lineWidth="0.5"/></box>
+        <box leftPadding="4" rightPadding="4"><pen lineWidth="0.5"/></box>
         <textElement><font isBold="true" size="9"/></textElement>
         <text><![CDATA[Rol]]></text>
       </staticText>
       <staticText>
         <reportElement x="320" y="0" width="115" height="20" backcolor="#EEEEEE" mode="Opaque"/>
-        <box><pen lineWidth="0.5"/></box>
+        <box leftPadding="4" rightPadding="4"><pen lineWidth="0.5"/></box>
         <textElement textAlignment="Right"><font isBold="true" size="9"/></textElement>
         <text><![CDATA[Ingresos]]></text>
       </staticText>
       <staticText>
         <reportElement x="435" y="0" width="100" height="20" backcolor="#EEEEEE" mode="Opaque"/>
-        <box><pen lineWidth="0.5"/></box>
+        <box leftPadding="4" rightPadding="4"><pen lineWidth="0.5"/></box>
         <textElement textAlignment="Right"><font isBold="true" size="9"/></textElement>
         <text><![CDATA[Ventas]]></text>
       </staticText>
@@ -48,25 +86,25 @@
     <band height="18">
       <textField>
         <reportElement x="0" y="0" width="220" height="18"/>
-        <box><pen lineWidth="0.25" lineColor="#CCCCCC"/></box>
+        <box leftPadding="4" rightPadding="4"><pen lineWidth="0.25" lineColor="#CCCCCC"/></box>
         <textElement><font size="9"/></textElement>
         <textFieldExpression><![CDATA[$F{vendedor}]]></textFieldExpression>
       </textField>
       <textField>
         <reportElement x="220" y="0" width="100" height="18"/>
-        <box><pen lineWidth="0.25" lineColor="#CCCCCC"/></box>
+        <box leftPadding="4" rightPadding="4"><pen lineWidth="0.25" lineColor="#CCCCCC"/></box>
         <textElement><font size="9"/></textElement>
         <textFieldExpression><![CDATA[$F{rol}]]></textFieldExpression>
       </textField>
       <textField>
         <reportElement x="320" y="0" width="115" height="18"/>
-        <box><pen lineWidth="0.25" lineColor="#CCCCCC"/></box>
+        <box leftPadding="4" rightPadding="4"><pen lineWidth="0.25" lineColor="#CCCCCC"/></box>
         <textElement textAlignment="Right"><font size="9"/></textElement>
         <textFieldExpression><![CDATA[$F{ingresos}]]></textFieldExpression>
       </textField>
       <textField>
         <reportElement x="435" y="0" width="100" height="18"/>
-        <box><pen lineWidth="0.25" lineColor="#CCCCCC"/></box>
+        <box leftPadding="4" rightPadding="4"><pen lineWidth="0.25" lineColor="#CCCCCC"/></box>
         <textElement textAlignment="Right"><font size="9"/></textElement>
         <textFieldExpression><![CDATA[$F{ventas}]]></textFieldExpression>
       </textField>
