@@ -62,6 +62,7 @@ public final class BoletosDialog {
         emailField.setPromptText("correo@ejemplo.com");
         emailField.setPrefWidth(220);
         Button enviarButton = new Button("Enviar por correo");
+        enviarButton.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
         Label status = new Label();
         status.setWrapText(true);
 
@@ -78,7 +79,9 @@ public final class BoletosDialog {
         root.setScaleX(0.94);
         root.setScaleY(0.94);
 
-        stage.setScene(new Scene(root, 320, 610));
+        Scene escena = new Scene(root, 320, 610);
+        Tema.aplicar(escena);
+        stage.setScene(escena);
         stage.show();
 
         FadeTransition aparecer = new FadeTransition(Duration.millis(220), root);

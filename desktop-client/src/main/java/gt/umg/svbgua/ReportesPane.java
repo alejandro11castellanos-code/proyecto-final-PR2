@@ -56,9 +56,9 @@ public final class ReportesPane extends BorderPane {
         "#EDC948", "#B07AA1", "#FF9DA7", "#9C755F", "#BAB0AC",
     };
 
-    private static final double ANCHO_BARRA_ANGOSTA = 430;
-    // Casi el ancho de dos angostas + el espacio entre ellas (430*2 + 16).
-    private static final double ANCHO_BARRA_ANCHA = 876;
+    private static final double ANCHO_BARRA_ANGOSTA = 400;
+    // Dos angostas + el espacio entre ellas (400*2 + 16).
+    private static final double ANCHO_BARRA_ANCHA = 816;
 
     private final CatalogClient client;
     private final String token;
@@ -101,6 +101,7 @@ public final class ReportesPane extends BorderPane {
 
     private VBox buildEncabezado() {
         Button actualizarButton = new Button("Actualizar");
+        actualizarButton.getStyleClass().add("secondary");
         actualizarButton.setOnAction(event -> cargar());
 
         exportarButton.setDisable(true);
@@ -113,9 +114,11 @@ public final class ReportesPane extends BorderPane {
         HBox fila = new HBox(16, kpis, actualizarButton, exportarButton);
         fila.setAlignment(Pos.CENTER_LEFT);
 
-        resumenFiltros.setStyle("-fx-font-size: 11px; -fx-opacity: 0.8;");
+        resumenFiltros.getStyleClass().add("muted");
         resumenFiltros.setWrapText(true);
         status.setWrapText(true);
+        Tema.ocultarSiVacia(resumenFiltros);
+        Tema.ocultarSiVacia(status);
         VBox top = new VBox(8, fila, buildFiltros(), resumenFiltros, status);
         return top;
     }
@@ -141,11 +144,14 @@ public final class ReportesPane extends BorderPane {
         Button aplicarButton = new Button("Aplicar filtros");
         aplicarButton.setOnAction(event -> aplicarFiltros());
         Button limpiarButton = new Button("Limpiar");
+        limpiarButton.getStyleClass().add("secondary");
         limpiarButton.setOnAction(event -> limpiarFiltros());
 
         FlowPane filtros = new FlowPane(8, 8, new Label("Fecha de compra:"), desdePicker, hastaPicker,
                 artistaCombo, conciertoCombo, vendedorCombo, localidadCombo, aplicarButton, limpiarButton);
         filtros.setAlignment(Pos.CENTER_LEFT);
+        filtros.setPadding(new Insets(12, 16, 12, 16));
+        filtros.getStyleClass().add("card");
         return filtros;
     }
 
@@ -243,11 +249,11 @@ public final class ReportesPane extends BorderPane {
 
     private VBox tarjetaKpi(String titulo, Label valor) {
         Label tituloLabel = new Label(titulo);
-        tituloLabel.setStyle("-fx-font-size: 11px; -fx-opacity: 0.7;");
-        valor.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
+        tituloLabel.getStyleClass().add("kpi-title");
+        valor.getStyleClass().add("kpi-value");
         VBox tarjeta = new VBox(2, tituloLabel, valor);
-        tarjeta.setPadding(new Insets(8, 16, 8, 16));
-        tarjeta.setStyle("-fx-border-color: derive(-fx-base, -20%); -fx-border-radius: 4; -fx-border-width: 1;");
+        tarjeta.setPadding(new Insets(12, 20, 12, 20));
+        tarjeta.getStyleClass().add("card");
         return tarjeta;
     }
 
@@ -307,9 +313,11 @@ public final class ReportesPane extends BorderPane {
         ultimaDescripcionFiltros = descripcionFiltros;
         resumenFiltros.setText(conFiltros ? "Filtros aplicados: " + descripcionFiltros : "");
         exportarButton.setDisable(false);
-        kpiIngresos.setText(formatearMoneda(dashboard.resumen().ingresosTotales()));
-        kpiBoletos.setText(String.valueOf(dashboard.resumen().boletosVendidos()));
-        kpiPromedio.setText(formatearMoneda(dashboard.resumen().precioPromedio()));
+        Animaciones.contar(kpiIngresos, Double.parseDouble(dashboard.resumen().ingresosTotales()),
+                ReportesPane::formatearMoneda);
+        Animaciones.contar(kpiBoletos, dashboard.resumen().boletosVendidos(), valor -> String.valueOf(Math.round(valor)));
+        Animaciones.contar(kpiPromedio, Double.parseDouble(dashboard.resumen().precioPromedio()),
+                ReportesPane::formatearMoneda);
 
         // Las barras quedan mucho mas angostas (y legibles) de a dos por fila
         // en vez de una sola gráfica ocupando todo el ancho disponible.
@@ -325,12 +333,15 @@ public final class ReportesPane extends BorderPane {
                 seccion("Ventas por día", lineChartPorDia(dashboard.porDia())),
                 seccion("Boletos por localidad", pieChartLocalidad(dashboard.porLocalidad())),
                 seccion("Ocupación por concierto (inventario actual: no depende de fechas ni vendedor)", ocupacionPane(dashboard.ocupacion())));
+        Animaciones.entradaEnCascada(contenido.getChildren());
     }
 
     private VBox seccion(String titulo, javafx.scene.Node grafico) {
         Label label = new Label(titulo);
-        label.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-        VBox box = new VBox(8, label, grafico);
+        label.getStyleClass().add("section-title");
+        VBox box = new VBox(10, label, grafico);
+        box.setPadding(new Insets(16));
+        box.getStyleClass().add("card");
         return box;
     }
 
@@ -491,15 +502,18 @@ public final class ReportesPane extends BorderPane {
         ProgressBar barra = new ProgressBar(porcentaje);
         barra.setPrefWidth(180);
         barra.setStyle("-fx-accent: " + color(indice) + ";");
+        Animaciones.llenar(barra, porcentaje);
 
         Label detalle = new Label(fila.vendido() + " / " + fila.cantidadTotal()
                 + String.format(Locale.of("es", "GT"), " (%.0f%%)", porcentaje * 100));
+        detalle.getStyleClass().add("muted");
         detalle.setStyle("-fx-font-size: 11px;");
 
         VBox tarjeta = new VBox(6, titulo, barra, detalle);
         tarjeta.setPadding(new Insets(8));
         tarjeta.setPrefWidth(220);
-        tarjeta.setStyle("-fx-border-color: derive(-fx-base, -20%); -fx-border-radius: 4; -fx-border-width: 1;");
+        tarjeta.setPadding(new Insets(14));
+        tarjeta.getStyleClass().add("card");
         return tarjeta;
     }
 
@@ -517,6 +531,10 @@ public final class ReportesPane extends BorderPane {
         chart.setMaxWidth(ancho);
         chart.setCategoryGap(20);
         return chart;
+    }
+
+    private static String formatearMoneda(double valor) {
+        return String.format(Locale.of("es", "GT"), "Q %,.2f", valor);
     }
 
     private static String formatearMoneda(String valor) {

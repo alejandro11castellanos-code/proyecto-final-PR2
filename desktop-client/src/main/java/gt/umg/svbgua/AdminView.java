@@ -1,50 +1,24 @@
 package gt.umg.svbgua;
 
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
+import java.util.List;
 
-/** Panel de administración: pestañas de artistas, localidades y conciertos. */
-public final class AdminView extends BorderPane {
+/** Panel de administración: catálogo, aforo, ventas, historial y reportes. */
+public final class AdminView extends AppShell {
 
     public AdminView(CatalogClient client, String token, String nombreCompleto, Runnable cerrarSesion) {
-        Label header = new Label("Panel de administración — " + nombreCompleto);
-        header.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
-
-        Region espaciador = new Region();
-        HBox.setHgrow(espaciador, Priority.ALWAYS);
-
-        Button cerrarSesionButton = new Button("Cerrar sesión");
-        cerrarSesionButton.setOnAction(event -> cerrarSesion.run());
-
-        HBox barra = new HBox(header, espaciador, cerrarSesionButton);
-        barra.setAlignment(Pos.CENTER_LEFT);
-        barra.setPadding(new Insets(16, 16, 0, 16));
-        setTop(barra);
-
-        TabPane tabs = new TabPane(
-                tab("Usuarios", new UsuariosPane(client, token)),
-                tab("Artistas", new ArtistasPane(client, token)),
-                tab("Localidades", new LocalidadesPane(client, token)),
-                tab("Conciertos", new ConciertosPane(client, token)),
-                tab("Aforo", new InventarioPane(client, token)),
-                tab("Ventas", new VentaPane(client, token)),
-                tab("Historial", new HistorialPane(client, token, true)),
-                tab("Reportes", new ReportesPane(client, token, nombreCompleto)));
-        setCenter(tabs);
+        super("Administración", nombreCompleto, "Administrador", secciones(client, token, nombreCompleto),
+                cerrarSesion);
     }
 
-    private static Tab tab(String title, Node content) {
-        Tab tab = new Tab(title, content);
-        tab.setClosable(false);
-        return tab;
+    private static List<Seccion> secciones(CatalogClient client, String token, String nombreCompleto) {
+        return List.of(
+                new Seccion("Usuarios", new UsuariosPane(client, token)),
+                new Seccion("Artistas", new ArtistasPane(client, token)),
+                new Seccion("Localidades", new LocalidadesPane(client, token)),
+                new Seccion("Conciertos", new ConciertosPane(client, token)),
+                new Seccion("Aforo", new InventarioPane(client, token)),
+                new Seccion("Ventas", new VentaPane(client, token)),
+                new Seccion("Historial", new HistorialPane(client, token, true)),
+                new Seccion("Reportes", new ReportesPane(client, token, nombreCompleto)));
     }
 }
