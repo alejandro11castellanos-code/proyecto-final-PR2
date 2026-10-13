@@ -41,6 +41,7 @@ public final class InventarioPane extends BorderPane {
     private final Button guardarButton = new Button("Guardar");
     private final Button eliminarButton = new Button("Eliminar");
     private final Label status = new Label();
+    private final Label tituloForm = new Label("Nuevo cupo");
     private Inventario seleccionado;
 
     public InventarioPane(CatalogClient client, String token) {
@@ -48,8 +49,7 @@ public final class InventarioPane extends BorderPane {
         this.token = token;
         setPadding(new Insets(16));
         setTop(buildSeleccionConcierto());
-        setCenter(buildTable());
-        setBottom(buildForm());
+        setCenter(Formulario.lado(buildTable(), buildForm()));
         cargarConciertos();
         cargarLocalidades();
     }
@@ -107,7 +107,7 @@ public final class InventarioPane extends BorderPane {
     }
 
     private VBox buildForm() {
-        localidadCombo.setPromptText("Localidad");
+        localidadCombo.setPromptText("Seleccione");
         localidadCombo.setConverter(new StringConverter<>() {
             @Override
             public String toString(Localidad localidad) {
@@ -120,8 +120,8 @@ public final class InventarioPane extends BorderPane {
             }
         });
         localidadCombo.setOnShowing(event -> cargarLocalidades());
-        precioField.setPromptText("Precio (ej. 450.00)");
-        cantidadField.setPromptText("Cupo total");
+        precioField.setPromptText("450.00");
+        cantidadField.setPromptText("Ej. 300");
 
         Button nuevoButton = new Button("Nuevo");
         nuevoButton.setOnAction(event -> limpiarFormulario());
@@ -129,17 +129,22 @@ public final class InventarioPane extends BorderPane {
         eliminarButton.setOnAction(event -> eliminar());
         eliminarButton.setDisable(true);
 
-        HBox botones = new HBox(8, nuevoButton, guardarButton, eliminarButton);
-        botones.setAlignment(Pos.CENTER_LEFT);
         status.setWrapText(true);
+        nuevoButton.getStyleClass().add("secondary");
+        eliminarButton.getStyleClass().add("danger");
+        status.setWrapText(true);
+        Tema.ocultarSiVacia(status);
 
-        VBox form = new VBox(8, localidadCombo, precioField, cantidadField, botones, status);
-        form.setPadding(new Insets(12, 0, 0, 0));
-        return form;
+        return Formulario.tarjeta(tituloForm, "Elija un concierto, luego seleccione una localidad de la tabla o cree un cupo nuevo.",
+                Formulario.campo("Localidad", localidadCombo),
+                Formulario.dosColumnas(Formulario.campo("Precio (Q)", precioField), Formulario.campo("Cupo total", cantidadField)),
+                Formulario.botones(guardarButton, nuevoButton, eliminarButton),
+                status);
     }
 
     private void seleccionar(Inventario inventario) {
         seleccionado = inventario;
+        tituloForm.setText(inventario == null ? "Nuevo cupo" : "Editar cupo");
         eliminarButton.setDisable(inventario == null);
         if (inventario == null) {
             return;
@@ -155,6 +160,7 @@ public final class InventarioPane extends BorderPane {
     private void limpiarFormulario() {
         table.getSelectionModel().clearSelection();
         seleccionado = null;
+        tituloForm.setText("Nuevo cupo");
         localidadCombo.setValue(null);
         precioField.clear();
         cantidadField.clear();

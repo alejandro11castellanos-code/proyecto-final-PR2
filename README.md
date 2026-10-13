@@ -104,6 +104,12 @@ mvn javafx:run
   y barras de ocupación que se llenan, escala al pasar el mouse por los
   botones y sacudida del formulario ante credenciales inválidas.
 
+- **Formularios en tarjeta y fondo de portada:** en Usuarios, Artistas,
+  Localidades, Conciertos y Aforo el formulario de alta/edición es una tarjeta
+  junto a la tabla (con título "Nuevo"/"Editar" según la selección). En Ventas
+  la portada del concierto elegido se muestra difuminada de fondo y cambia con
+  un fundido al elegir otro.
+
 - **Filtros en reportes:** el dashboard y el PDF se pueden filtrar por rango
   de fecha de compra, artista, concierto, vendedor y localidad (se combinan).
   La portada del PDF indica qué filtros se aplicaron. La ocupación es una

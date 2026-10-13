@@ -45,6 +45,7 @@ public final class ConciertosPane extends BorderPane {
     private final TextField recintoField = new TextField();
     private final ComboBox<String> estadoCombo = new ComboBox<>(FXCollections.observableArrayList(ESTADOS));
     private final Label status = new Label();
+    private final Label tituloForm = new Label("Nuevo concierto");
     private final Button guardarButton = new Button("Guardar");
     private final Button eliminarButton = new Button("Eliminar");
     private final PreviewPanel previewPanel = new PreviewPanel();
@@ -54,9 +55,14 @@ public final class ConciertosPane extends BorderPane {
         this.client = client;
         this.token = token;
         setPadding(new Insets(16));
-        setCenter(buildTablaConBuscador());
-        setRight(previewPanel);
-        setBottom(buildForm());
+        // La vista previa va debajo del formulario (no a un lado) para no quitarle ancho a la tabla.
+        previewPanel.getStyleClass().add("card");
+        previewPanel.setPadding(new Insets(14));
+        previewPanel.setPrefWidth(340);
+        previewPanel.setMaxWidth(340);
+        previewPanel.managedProperty().bind(previewPanel.hayArtista());
+        previewPanel.visibleProperty().bind(previewPanel.hayArtista());
+        setCenter(Formulario.lado(buildTablaConBuscador(), new VBox(14, buildForm(), previewPanel)));
         cargarArtistas();
         cargar();
     }
@@ -105,7 +111,7 @@ public final class ConciertosPane extends BorderPane {
     }
 
     private VBox buildForm() {
-        artistaCombo.setPromptText("Artista");
+        artistaCombo.setPromptText("Seleccione");
         artistaCombo.setConverter(new StringConverter<>() {
             @Override
             public String toString(Artista artista) {
@@ -119,10 +125,10 @@ public final class ConciertosPane extends BorderPane {
         });
         // Un artista pudo darse de alta en otra pestaña después de armar esta.
         artistaCombo.setOnShowing(event -> cargarArtistas());
-        tituloField.setPromptText("Título del evento");
-        fechaField.setPromptText("Fecha (ISO 8601, ej. 2026-11-15T20:00:00Z)");
-        recintoField.setPromptText("Recinto");
-        estadoCombo.setPromptText("Estado");
+        tituloField.setPromptText("Ej. Gira Aniversario 2026");
+        fechaField.setPromptText("2026-11-15T20:00:00Z");
+        recintoField.setPromptText("Ej. Teatro Nacional");
+        estadoCombo.setPromptText("Seleccione");
 
         Button nuevoButton = new Button("Nuevo");
         nuevoButton.setOnAction(event -> limpiarSeleccion());
@@ -130,17 +136,24 @@ public final class ConciertosPane extends BorderPane {
         eliminarButton.setOnAction(event -> eliminar());
         eliminarButton.setDisable(true);
 
-        HBox botones = new HBox(8, nuevoButton, guardarButton, eliminarButton);
-        botones.setAlignment(Pos.CENTER_LEFT);
         status.setWrapText(true);
+        nuevoButton.getStyleClass().add("secondary");
+        eliminarButton.getStyleClass().add("danger");
+        status.setWrapText(true);
+        Tema.ocultarSiVacia(status);
 
-        VBox form = new VBox(8, artistaCombo, tituloField, fechaField, recintoField, estadoCombo, botones, status);
-        form.setPadding(new Insets(12, 0, 0, 0));
-        return form;
+        return Formulario.tarjeta(tituloForm, "Seleccione un concierto de la tabla o cree uno nuevo.",
+                Formulario.campo("Artista", artistaCombo),
+                Formulario.campo("Título del evento", tituloField),
+                Formulario.campo("Fecha y hora (ISO 8601)", fechaField),
+                Formulario.dosColumnas(Formulario.campo("Recinto", recintoField), Formulario.campo("Estado", estadoCombo)),
+                Formulario.botones(guardarButton, nuevoButton, eliminarButton),
+                status);
     }
 
     private void seleccionar(Concierto concierto) {
         seleccionado = concierto;
+        tituloForm.setText(concierto == null ? "Nuevo concierto" : "Editar concierto");
         eliminarButton.setDisable(concierto == null);
         if (concierto == null) {
             previewPanel.limpiar();
@@ -161,6 +174,7 @@ public final class ConciertosPane extends BorderPane {
         previewPanel.limpiar();
         table.getSelectionModel().clearSelection();
         seleccionado = null;
+        tituloForm.setText("Nuevo concierto");
         artistaCombo.setValue(null);
         tituloField.clear();
         fechaField.clear();
