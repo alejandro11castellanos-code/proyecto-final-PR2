@@ -182,6 +182,22 @@ public final class CatalogClient {
         send("POST", "/ventas/" + idVenta + "/enviar", token, new EnviarRequest(email), EnviarResponse.class);
     }
 
+    // ---- Control de acceso ----
+
+    /** Registra el ingreso de un boleto; si ya ingresó o el código no existe, lanza ApiException con el motivo. */
+    public Ingreso registrarIngreso(String token, String codigo) {
+        return send("POST", "/accesos", token, new CodigoRequest(codigo), Ingreso.class);
+    }
+
+    public List<ResumenAcceso> resumenAccesos(String token) {
+        return getList("/accesos/resumen", token, ResumenAcceso[].class);
+    }
+
+    public List<Ingreso> ingresosRecientes(String token, Integer idConcierto) {
+        String ruta = idConcierto == null ? "/accesos" : "/accesos?concierto=" + idConcierto;
+        return getList(ruta, token, Ingreso[].class);
+    }
+
     // ---- Reportes ----
 
     public Dashboard obtenerDashboard(String token, FiltrosReporte filtros) {
@@ -288,8 +304,21 @@ public final class CatalogClient {
             String totalVenta, int boletos) {
     }
 
-    public record Boleto(int idDetalle, String tituloEvento, String nombreArtistico, String nombreLocalidad,
-            int cantidad, String codigo, String qr) {
+    /** Un boleto es UNA persona: {@code numero} de {@code cantidad} dentro de su renglón de venta. */
+    public record Boleto(int idBoleto, int idDetalle, String tituloEvento, String nombreArtistico,
+            String nombreLocalidad, int numero, int cantidad, String codigo, boolean ingresado, String qr) {
+    }
+
+    private record CodigoRequest(String codigo) {
+    }
+
+    /** Resultado de registrar un ingreso, o fila del listado de ingresos recientes. */
+    public record Ingreso(int idBoleto, String codigo, String tituloEvento, String nombreArtistico,
+            String nombreLocalidad, int numero, int cantidad, String fechaIngreso, String nombreValidador) {
+    }
+
+    public record ResumenAcceso(int idConcierto, String tituloEvento, String nombreArtistico, int vendidos,
+            int ingresados) {
     }
 
     private record BoletosResponse(int idVenta, List<Boleto> boletos) {

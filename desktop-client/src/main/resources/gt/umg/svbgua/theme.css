@@ -577,3 +577,27 @@
 .button.danger:pressed {
     -fx-background-color: #ffe3e3;
 }
+
+/* ---------- Resultado del control de acceso ---------- */
+
+.resultado-ok {
+    -fx-background-color: #eafaf3;
+    -fx-background-radius: 12;
+    -fx-border-color: #2ebd85;
+    -fx-border-radius: 12;
+}
+
+.resultado-ok .label {
+    -fx-text-fill: #17684a;
+}
+
+.resultado-error {
+    -fx-background-color: #fdeeee;
+    -fx-background-radius: 12;
+    -fx-border-color: #e5484d;
+    -fx-border-radius: 12;
+}
+
+.resultado-error .label {
+    -fx-text-fill: #a32529;
+}

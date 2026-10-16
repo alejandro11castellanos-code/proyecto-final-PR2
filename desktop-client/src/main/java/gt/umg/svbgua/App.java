@@ -38,6 +38,11 @@ public class App extends Application {
                     1200, 720, "SVB-GUA — Administración");
             return;
         }
+        if ("acceso".equals(usuario.rol())) {
+            cambiarEscena(stage, new AccesoView(catalogClient, token, usuario.nombreCompleto(), cerrarSesion),
+                    1200, 720, "SVB-GUA — Control de acceso");
+            return;
+        }
         cambiarEscena(stage, new VendedorView(catalogClient, token, usuario.nombreCompleto(), cerrarSesion),
                 1200, 720, "SVB-GUA — Punto de venta");
     }

@@ -14,6 +14,7 @@ public final class AdminView extends AppShell {
         InventarioPane aforo = new InventarioPane(client, token);
         VentaPane ventas = new VentaPane(client, token);
         HistorialPane historial = new HistorialPane(client, token, true);
+        AccesoPane acceso = new AccesoPane(client, token);
         ReportesPane reportes = new ReportesPane(client, token, nombreCompleto);
         // Estas vistas dependen de ventas que se hacen en otra sección: se refrescan al abrirlas.
         return List.of(
@@ -24,6 +25,7 @@ public final class AdminView extends AppShell {
                 new Seccion("Aforo", aforo, aforo::actualizar),
                 new Seccion("Ventas", ventas, ventas::actualizar),
                 new Seccion("Historial", historial, historial::actualizar),
+                new Seccion("Control de acceso", acceso, acceso::alAbrir),
                 new Seccion("Reportes", reportes, reportes::actualizar));
     }
 }

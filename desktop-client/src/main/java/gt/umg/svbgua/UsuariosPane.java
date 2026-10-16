@@ -30,7 +30,7 @@ import javafx.scene.layout.VBox;
  */
 public final class UsuariosPane extends BorderPane {
 
-    private static final List<String> ROLES = List.of("administrador", "vendedor");
+    private static final List<String> ROLES = List.of("administrador", "vendedor", "acceso");
 
     private final CatalogClient client;
     private final String token;

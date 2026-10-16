@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
 import javafx.animation.ScaleTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -17,8 +18,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -181,7 +185,10 @@ public final class BoletosDialog {
         perforacion.setStyle("-fx-stroke: derive(-fx-base, -30%);");
         VBox.setMargin(perforacion, new Insets(10, 0, 0, 0));
 
-        Label localidad = new Label(boleto.nombreLocalidad() + "  ×" + boleto.cantidad());
+        String detalle = boleto.cantidad() > 1
+                ? boleto.nombreLocalidad() + "  ·  boleto " + boleto.numero() + " de " + boleto.cantidad()
+                : boleto.nombreLocalidad();
+        Label localidad = new Label(detalle);
         localidad.setStyle("-fx-font-weight: bold;");
 
         ImageView qr = new ImageView(decodificarQr(boleto.qr()));
@@ -189,9 +196,25 @@ public final class BoletosDialog {
         qr.setFitHeight(140);
 
         Label codigo = new Label(boleto.codigo());
-        codigo.setStyle("-fx-font-size: 10px; -fx-opacity: 0.6;");
+        codigo.setStyle("-fx-font-size: 10px; -fx-opacity: 0.6; -fx-cursor: hand;");
+        // Clic para copiar: sirve para simular el escaneo pegando el código en Control de acceso.
+        Tooltip.install(codigo, new Tooltip("Clic para copiar el código"));
+        codigo.setOnMouseClicked(evento -> {
+            ClipboardContent contenido = new ClipboardContent();
+            contenido.putString(boleto.codigo());
+            Clipboard.getSystemClipboard().setContent(contenido);
+            codigo.setText("Código copiado");
+            PauseTransition volver = new PauseTransition(Duration.seconds(1.2));
+            volver.setOnFinished(fin -> codigo.setText(boleto.codigo()));
+            volver.play();
+        });
 
         VBox cuerpo = new VBox(8, localidad, qr, codigo);
+        if (boleto.ingresado()) {
+            Label yaIngreso = new Label("YA INGRESÓ");
+            yaIngreso.setStyle("-fx-text-fill: #e5484d; -fx-font-weight: bold; -fx-font-size: 11px;");
+            cuerpo.getChildren().add(yaIngreso);
+        }
         cuerpo.setAlignment(Pos.CENTER);
         cuerpo.setPadding(new Insets(4, 12, 14, 12));
 
