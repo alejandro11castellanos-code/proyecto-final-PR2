@@ -11,7 +11,9 @@ function renderHtml(venta, boletos) {
   const filas = boletos
     .map((boleto, index) => `
       <li style="margin-bottom:16px;">
-        <strong>${boleto.titulo_evento}</strong> — ${boleto.nombre_localidad} × ${boleto.cantidad}
+        <strong>${boleto.titulo_evento}</strong> — ${boleto.nombre_localidad}, boleto ${boleto.numero} de ${boleto.cantidad}
+        <br>
+        <span style="font-family:monospace;font-size:12px;">${boleto.codigo}</span>
         <br>
         <img src="cid:boleto${index}" alt="Código QR del boleto" width="180" height="180">
       </li>`)

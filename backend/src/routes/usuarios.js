@@ -2,7 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import { authenticateToken, authorizeRoles } from '../middleware/auth.js';
 
-const ROLES_VALIDOS = ['administrador', 'vendedor'];
+const ROLES_VALIDOS = ['administrador', 'vendedor', 'acceso'];
 const CONTRASENA_MINIMA = 6;
 
 function isBlank(value) {

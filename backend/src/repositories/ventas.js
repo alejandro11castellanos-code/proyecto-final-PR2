@@ -1,3 +1,5 @@
+import { generarCodigoBoleto } from '../services/qrcode.js';
+
 export class InventarioNoEncontradoError extends Error {
   constructor(idInventario) {
     super(`El inventario ${idInventario} no existe.`);
@@ -87,11 +89,22 @@ export function createVentaRepository(pool) {
         const venta = ventaResult.rows[0];
 
         for (const detalle of detalles) {
-          await client.query(
+          const insertado = await client.query(
             `INSERT INTO detalle_ventas (id_venta, id_inventario, cantidad, precio_unitario, subtotal)
-             VALUES ($1, $2, $3, $4, $5)`,
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING id_detalle`,
             [venta.id_venta, detalle.id_inventario, detalle.cantidad, detalle.precio_unitario, detalle.subtotal],
           );
+          detalle.id_detalle = insertado.rows[0].id_detalle;
+
+          // Un boleto (con su propio código) por persona, en la misma transacción que la venta.
+          const valores = [];
+          const parametros = [];
+          for (let numero = 1; numero <= detalle.cantidad; numero += 1) {
+            parametros.push(detalle.id_detalle, numero, generarCodigoBoleto(venta.id_venta, detalle.id_detalle, numero));
+            valores.push(`($${parametros.length - 2}, $${parametros.length - 1}, $${parametros.length})`);
+          }
+          await client.query(`INSERT INTO boletos (id_detalle, numero, codigo) VALUES ${valores.join(', ')}`, parametros);
         }
 
         await client.query('COMMIT');
@@ -127,7 +140,20 @@ export function createVentaRepository(pool) {
         [idVenta],
       );
 
-      return { ...venta, items: itemsResult.rows };
+      const boletosResult = await pool.query(
+        `SELECT b.id_boleto, b.id_detalle, b.numero, b.codigo, b.fecha_ingreso
+         FROM boletos b
+         JOIN detalle_ventas d ON d.id_detalle = b.id_detalle
+         WHERE d.id_venta = $1
+         ORDER BY b.id_detalle, b.numero`,
+        [idVenta],
+      );
+      const items = itemsResult.rows.map((item) => ({
+        ...item,
+        boletos: boletosResult.rows.filter((boleto) => boleto.id_detalle === item.id_detalle),
+      }));
+
+      return { ...venta, items };
     },
 
     // Lista liviana para el historial: sin el detalle por ítem (eso lo trae
