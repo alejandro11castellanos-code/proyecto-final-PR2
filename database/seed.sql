@@ -11,7 +11,8 @@ TRUNCATE detalle_ventas, ventas, inventario_boletos, conciertos, localidades, ar
 INSERT INTO usuarios (nombre_usuario, contrasena_hash, nombre_completo, rol) VALUES
     ('admin',     '__BCRYPT_ADMIN__',    'Administrador General', 'administrador'),
     ('vendedor1', '__BCRYPT_VENDEDOR__', 'Ana Lopez',             'vendedor'),
-    ('vendedor2', '__BCRYPT_VENDEDOR__', 'Carlos Perez',          'vendedor');
+    ('vendedor2', '__BCRYPT_VENDEDOR__', 'Carlos Perez',          'vendedor'),
+    ('puerta1',   '__BCRYPT_ACCESO__',   'Control de Acceso',     'acceso');
 
 INSERT INTO artistas (nombre_artistico, genero_musical, pais_origen) VALUES
     ('Los Miserables',   'Rock',        'Guatemala'),

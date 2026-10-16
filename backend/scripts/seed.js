@@ -12,7 +12,8 @@ const seedPath = path.resolve(here, '../../database/seed.sql');
 
 const sql = (await readFile(seedPath, 'utf8'))
   .replaceAll('__BCRYPT_ADMIN__', bcrypt.hashSync('admin123', 10))
-  .replaceAll('__BCRYPT_VENDEDOR__', bcrypt.hashSync('vendedor123', 10));
+  .replaceAll('__BCRYPT_VENDEDOR__', bcrypt.hashSync('vendedor123', 10))
+  .replaceAll('__BCRYPT_ACCESO__', bcrypt.hashSync('puerta123', 10));
 
 try {
   await pool.query(sql);

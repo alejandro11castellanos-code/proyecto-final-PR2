@@ -1,24 +1,25 @@
 import express from 'express';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, authorizeRoles } from '../middleware/auth.js';
 import { InventarioNoEncontradoError, DisponibilidadInsuficienteError } from '../repositories/ventas.js';
-import { codigoBoleto } from '../services/qrcode.js';
 import { MailerError } from '../services/mailer.js';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Un boleto por persona: un renglón con cantidad 3 produce 3 boletos, cada uno con su propio
+// código y QR. Así el ingreso se controla persona por persona.
 async function construirBoletos(venta, qrProvider) {
-  return Promise.all(venta.items.map(async (item) => {
-    const codigo = codigoBoleto(venta.id_venta, item.id_detalle);
-    return {
-      id_detalle: item.id_detalle,
-      titulo_evento: item.titulo_evento,
-      nombre_artistico: item.nombre_artistico,
-      nombre_localidad: item.nombre_localidad,
-      cantidad: item.cantidad,
-      codigo,
-      qr: await qrProvider.generar(codigo),
-    };
-  }));
+  const boletos = venta.items.flatMap((item) => (item.boletos ?? []).map((boleto) => ({
+    id_boleto: boleto.id_boleto,
+    id_detalle: item.id_detalle,
+    titulo_evento: item.titulo_evento,
+    nombre_artistico: item.nombre_artistico,
+    nombre_localidad: item.nombre_localidad,
+    numero: boleto.numero,
+    cantidad: item.cantidad,
+    codigo: boleto.codigo,
+    ingresado: Boolean(boleto.fecha_ingreso),
+  })));
+  return Promise.all(boletos.map(async (boleto) => ({ ...boleto, qr: await qrProvider.generar(boleto.codigo) })));
 }
 
 function validarItems(rawItems) {
@@ -48,7 +49,8 @@ function validarItems(rawItems) {
 
 export function createVentaRouter({ ventaRepository, qrProvider, mailer, jwtSecret }) {
   const router = express.Router();
-  const requireAuth = authenticateToken(jwtSecret);
+  // El rol de control de acceso solo valida ingresos: no vende ni consulta ventas.
+  const requireAuth = [authenticateToken(jwtSecret), authorizeRoles('administrador', 'vendedor')];
 
   router.post('/', requireAuth, async (req, res, next) => {
     const { error, items } = validarItems(req.body?.items);

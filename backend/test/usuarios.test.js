@@ -181,3 +181,13 @@ test('DELETE /usuarios/:id responde 409 si el usuario tiene ventas asociadas', a
   const response = await request(app).delete('/usuarios/2').set('Authorization', `Bearer ${adminToken}`);
   assert.equal(response.status, 409);
 });
+
+test('POST /usuarios acepta el rol de control de acceso', async () => {
+  const response = await request(buildApp())
+    .post('/usuarios')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ nombre_usuario: 'puerta2', contrasena: 'clave123', nombre_completo: 'Portero Dos', rol: 'acceso' });
+
+  assert.equal(response.status, 201);
+  assert.equal(response.body.rol, 'acceso');
+});

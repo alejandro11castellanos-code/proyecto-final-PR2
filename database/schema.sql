@@ -4,6 +4,7 @@
 
 BEGIN;
 
+DROP TABLE IF EXISTS boletos           CASCADE;
 DROP TABLE IF EXISTS detalle_ventas    CASCADE;
 DROP TABLE IF EXISTS ventas            CASCADE;
 DROP TABLE IF EXISTS inventario_boletos CASCADE;
@@ -21,7 +22,7 @@ CREATE TABLE usuarios (
     contrasena_hash VARCHAR(255) NOT NULL,               -- bcrypt
     nombre_completo VARCHAR(100) NOT NULL,
     rol             VARCHAR(20)  NOT NULL
-                    CHECK (rol IN ('administrador', 'vendedor')),
+                    CHECK (rol IN ('administrador', 'vendedor', 'acceso')),
     fecha_creacion  TIMESTAMP    NOT NULL DEFAULT NOW()
 );
 
@@ -92,10 +93,25 @@ CREATE TABLE detalle_ventas (
     subtotal        DECIMAL(10, 2) NOT NULL CHECK (subtotal >= 0)
 );
 
+-- ---------------------------------------------------------------------------
+-- boletos  (uno por persona: un renglón con cantidad 3 genera 3 filas)
+-- fecha_ingreso NULL = aún no ha entrado; el control de acceso la llena una sola vez.
+-- ---------------------------------------------------------------------------
+CREATE TABLE boletos (
+    id_boleto     SERIAL      PRIMARY KEY,
+    id_detalle    INTEGER     NOT NULL REFERENCES detalle_ventas (id_detalle) ON DELETE CASCADE,
+    numero        INTEGER     NOT NULL CHECK (numero > 0),
+    codigo        VARCHAR(40) NOT NULL UNIQUE,
+    fecha_ingreso TIMESTAMP,
+    id_validador  INTEGER     REFERENCES usuarios (id_usuario),
+    CONSTRAINT uq_boleto_detalle_numero UNIQUE (id_detalle, numero)
+);
+
 CREATE INDEX ix_conciertos_artista       ON conciertos (id_artista);
 CREATE INDEX ix_inventario_concierto     ON inventario_boletos (id_concierto);
 CREATE INDEX ix_ventas_vendedor          ON ventas (id_vendedor);
 CREATE INDEX ix_detalle_ventas_venta     ON detalle_ventas (id_venta);
 CREATE INDEX ix_detalle_ventas_inventario ON detalle_ventas (id_inventario);
+CREATE INDEX ix_boletos_detalle           ON boletos (id_detalle);
 
 COMMIT;

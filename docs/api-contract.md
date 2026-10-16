@@ -399,3 +399,43 @@ cualquier zona que se enviara se descartaba en silencio y la hora se corría.
 El cliente de escritorio muestra estas fechas como `15 nov 2026, 20:00`
 (`Fechas.java`) y en el formulario de conciertos las pide por separado: selector
 de fecha y hora/minutos en 24 h.
+
+
+## Boletos y control de acceso
+
+**Un boleto es una persona.** Al registrar una venta, cada renglón de `detalle_ventas` con
+`cantidad` N genera N filas en `boletos`, cada una con su propio código, dentro de la misma
+transacción. El código tiene la forma `SVBGUA-V{venta}-D{renglon}-B{n}-{token}` y el token
+son 8 caracteres aleatorios (sin 0, O, 1, I ni L): sin él, conocer un código permitiría
+deducir los demás (V30-D34, V30-D35...) y colarse con uno inventado.
+
+`GET /ventas/:id/boletos` devuelve **un elemento por persona**:
+`{ id_boleto, id_detalle, titulo_evento, nombre_artistico, nombre_localidad, numero, cantidad,
+codigo, ingresado, qr }`, donde `numero` de `cantidad` ubica el boleto dentro de su renglón y
+`qr` codifica exactamente `codigo`. El correo adjunta un QR por boleto.
+
+**Escanear un QR no registra nada.** El QR solo contiene el código; escanearlo con una cámara
+normal no llama a ningún servicio. El ingreso lo registra una persona autenticada que envía el
+código a la API. Así nadie "gasta" el boleto de otro por curiosidad.
+
+| Método | Ruta | Acceso | Qué hace |
+|--------|------|--------|----------|
+| POST | `/accesos` | administrador, acceso | Registra el ingreso del boleto `{ "codigo": "..." }` |
+| GET | `/accesos/resumen` | administrador, acceso | Por concierto: `vendidos` e `ingresados` |
+| GET | `/accesos?concierto=` | administrador, acceso | Últimos 50 ingresos (opcionalmente de un concierto) |
+
+`POST /accesos` normaliza el código (espacios y mayúsculas) y responde: `200` con los datos
+del boleto y `fecha_ingreso`; `400` sin código; `404` si no existe; `409` si ya ingresó
+(`"Este boleto ya ingresó el 15/10/2026 21:52."`) o si el concierto está `cancelado` o
+`finalizado`. Se marca con un único `UPDATE ... WHERE fecha_ingreso IS NULL`, así que si dos
+escáneres leen el mismo boleto a la vez la base deja pasar a uno solo (verificado con 10
+peticiones simultáneas: una `200` y nueve `409`).
+
+**Rol `acceso` (control de acceso).** Solo registra y consulta ingresos. No puede vender, ni
+ver el historial, ni usar el resto del catálogo de administración: las rutas de `/ventas` ahora
+exigen administrador o vendedor.
+
+**Migración.** Una base creada con la versión anterior se actualiza con
+`database/migrations/001_boletos_y_control_de_acceso.sql` (rol, tabla `boletos` y boletos de
+las ventas existentes; se puede ejecutar más de una vez). Una base nueva solo necesita
+`schema.sql`. El seed agrega el usuario `puerta1` (rol `acceso`).

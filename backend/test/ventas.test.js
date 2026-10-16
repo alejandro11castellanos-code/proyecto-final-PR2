@@ -35,6 +35,10 @@ const ventaConDetalle = {
     id_concierto: 1,
     titulo_evento: 'Gira Aniversario',
     nombre_artistico: 'Los Miserables',
+    boletos: [
+      { id_boleto: 1, numero: 1, codigo: 'SVBGUA-V1-D10-B1-ABCD2345', fecha_ingreso: null },
+      { id_boleto: 2, numero: 2, codigo: 'SVBGUA-V1-D10-B2-WXYZ6789', fecha_ingreso: '2026-10-15T20:14:00' },
+    ],
   }],
 };
 
@@ -233,17 +237,34 @@ test('GET /ventas/:id/boletos responde 404 si la venta no existe', async () => {
   assert.equal(response.status, 404);
 });
 
-test('GET /ventas/:id/boletos genera un QR por cada ítem de la venta', async () => {
+test('GET /ventas/:id/boletos genera un QR por cada persona (no por renglón)', async () => {
   const app = buildApp({ findById: async (id) => (Number(id) === 1 ? ventaConDetalle : null) });
 
   const response = await request(app).get('/ventas/1/boletos').set('Authorization', `Bearer ${vendedorToken}`);
 
   assert.equal(response.status, 200);
   assert.equal(response.body.id_venta, 1);
-  assert.equal(response.body.boletos.length, 1);
-  assert.equal(response.body.boletos[0].codigo, 'SVBGUA-V1-D10');
-  assert.equal(response.body.boletos[0].nombre_localidad, 'Platea');
-  assert.match(response.body.boletos[0].qr, /^data:image\/png;base64,/);
+  assert.equal(response.body.boletos.length, 2);
+  const [primero, segundo] = response.body.boletos;
+  assert.equal(primero.codigo, 'SVBGUA-V1-D10-B1-ABCD2345');
+  assert.equal(segundo.codigo, 'SVBGUA-V1-D10-B2-WXYZ6789');
+  assert.equal(primero.nombre_localidad, 'Platea');
+  assert.equal(primero.numero, 1);
+  assert.equal(primero.cantidad, 2);
+  assert.equal(primero.ingresado, false);
+  assert.equal(segundo.ingresado, true);
+  assert.match(primero.qr, /^data:image\/png;base64,/);
+  // El QR codifica exactamente el código del boleto.
+  assert.equal(Buffer.from(primero.qr.split(',')[1], 'base64').toString(), primero.codigo);
+});
+
+test('el rol de control de acceso no puede vender ni consultar ventas', async () => {
+  const porteroToken = jwt.sign({ id_usuario: 4, rol: 'acceso' }, jwtSecret);
+  const app = buildApp({ findById: async () => ventaConDetalle });
+  for (const [metodo, ruta] of [['post', '/ventas'], ['get', '/ventas'], ['get', '/ventas/1'], ['get', '/ventas/1/boletos'], ['post', '/ventas/1/enviar']]) {
+    const response = await request(app)[metodo](ruta).set('Authorization', `Bearer ${porteroToken}`).send({});
+    assert.equal(response.status, 403, `${metodo.toUpperCase()} ${ruta}`);
+  }
 });
 
 test('POST /ventas/:id/enviar valida el formato del email', async () => {
@@ -282,8 +303,8 @@ test('POST /ventas/:id/enviar arma los boletos y se los pasa al mailer', async (
   assert.equal(response.status, 200);
   assert.deepEqual(response.body, { enviado: true, destinatario: 'ana@example.com' });
   assert.equal(recibido.destinatario, 'ana@example.com');
-  assert.equal(recibido.boletos.length, 1);
-  assert.equal(recibido.boletos[0].codigo, 'SVBGUA-V1-D10');
+  assert.equal(recibido.boletos.length, 2);
+  assert.equal(recibido.boletos[0].codigo, 'SVBGUA-V1-D10-B1-ABCD2345');
 });
 
 test('POST /ventas/:id/enviar responde 502 si el correo no se pudo enviar', async () => {
