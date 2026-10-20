@@ -9,7 +9,9 @@ services:
     buildCommand: npm ci
     startCommand: npm start
     healthCheckPath: /health
-    autoDeploy: true # cada push a main vuelve a desplegar
+    # Solo despliega solo si el repositorio está conectado a Render con GitHub. Si se creó pegando la
+    # URL de un repositorio público (sin conexión), hay que usar Manual Deploy (ver docs/despliegue-render.md).
+    autoDeploy: true
     envVars:
       - key: NODE_VERSION
         value: "24"
