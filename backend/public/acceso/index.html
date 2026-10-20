@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#15123d">
+  <title>SVB-GUA · Control de acceso</title>
+  <link rel="stylesheet" href="scanner.css">
+</head>
+<body>
+  <header class="barra">
+    <div class="marca">
+      <span class="logo" aria-hidden="true">SG</span>
+      <div><strong>SVB-GUA</strong><small>Control de acceso</small></div>
+    </div>
+    <div id="sesion" class="sesion" hidden>
+      <span id="usuario"></span>
+      <button id="salir" type="button" class="enlace">Salir</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="vista-login" class="tarjeta entrada">
+      <h1>Ingresar</h1>
+      <form id="form-login" autocomplete="on">
+        <label for="login-usuario">Usuario</label>
+        <input id="login-usuario" name="usuario" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+        <label for="login-clave">Contraseña</label>
+        <input id="login-clave" name="clave" type="password" autocomplete="current-password" required>
+        <button id="login-boton" type="submit" class="primario">Ingresar</button>
+        <p id="login-estado" class="estado" role="status"></p>
+      </form>
+    </section>
+
+    <section id="vista-escaner" hidden>
+      <div class="tarjeta">
+        <div id="visor" class="visor">
+          <video id="video" playsinline muted></video>
+          <div class="guia" aria-hidden="true"><span class="linea"></span></div>
+          <p id="visor-aviso" class="visor-aviso">Cámara apagada</p>
+        </div>
+        <div class="acciones">
+          <button id="btn-camara" type="button" class="primario">Activar cámara</button>
+        </div>
+        <p id="camara-estado" class="estado" role="status"></p>
+      </div>
+
+      <div id="resultado" class="resultado" role="alert" hidden>
+        <strong id="resultado-titulo"></strong>
+        <span id="resultado-detalle"></span>
+      </div>
+
+      <form id="form-manual" class="tarjeta">
+        <label for="codigo">O escriba el código</label>
+        <div class="fila">
+          <input id="codigo" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="SVBGUA-V12-D34-B1-ABCD2345">
+          <button id="btn-registrar" type="submit" class="primario">Registrar</button>
+        </div>
+      </form>
+
+      <div class="tarjeta">
+        <h2>Asistencia por concierto</h2>
+        <div id="asistencia"></div>
+      </div>
+
+      <div class="tarjeta">
+        <h2>Últimos ingresos</h2>
+        <ul id="recientes" class="recientes"></ul>
+      </div>
+    </section>
+  </main>
+
+  <script src="jsqr.js"></script>
+  <script type="module" src="scanner.js"></script>
+</body>
+</html>
