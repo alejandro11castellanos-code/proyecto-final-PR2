@@ -154,6 +154,11 @@ luego **Ejecutar de todas formas**. Ambos incluyen su propio Java.
   ingresos, refrescándose sola. Escanear un QR con una cámara cualquiera no registra
   nada. Usuario de desarrollo: `puerta1` / `puerta123`. Detalles en `docs/api-contract.md`.
 
+- **Escáner web con cámara:** `/acceso/` en el propio backend (por ejemplo
+  `https://<servidor>/acceso/`) permite escanear los QR con la cámara de un celular: se abre con el
+  QR y el botón del panel *Escanear con el celular* en Control de acceso. Funciona con cualquier
+  navegador moderno (necesita HTTPS, que Render ya da) y el resultado se refleja en la app.
+
 - **Fecha y hora legibles:** el formulario de conciertos pide la fecha con un
   calendario y la hora en horas/minutos (24 h), sin formatos técnicos. En toda la
   app las fechas se ven como `15 nov 2026, 20:00`. Las fechas viajan como hora

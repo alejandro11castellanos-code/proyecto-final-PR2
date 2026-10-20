@@ -2,6 +2,7 @@ package gt.umg.svbgua;
 
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
+import javafx.application.HostServices;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -10,11 +11,14 @@ import javafx.util.Duration;
 /** Cliente de escritorio: login y, según el rol, panel de administración o punto de venta. */
 public class App extends Application {
 
+    private static HostServices servicios;
+
     private AuthClient authClient = AuthClient.fromEnvironment();
     private CatalogClient catalogClient = CatalogClient.fromEnvironment();
 
     @Override
     public void start(Stage stage) {
+        servicios = getHostServices();
         stage.setMinWidth(900);
         stage.setMinHeight(600);
         mostrarLogin(stage);
@@ -25,6 +29,13 @@ public class App extends Application {
      * Pantalla de login. Se puede volver a llamar (desde "Cerrar sesión") sin
      * reiniciar la app — reemplaza la escena del mismo Stage.
      */
+    /** Abre una dirección en el navegador del sistema (no hace nada si la app aún no arrancó). */
+    static void abrirEnNavegador(String url) {
+        if (servicios != null) {
+            servicios.showDocument(url);
+        }
+    }
+
     private void mostrarLogin(Stage stage) {
         LoginView login = new LoginView(authClient, ConfiguracionServidor.urlActual(),
                 url -> {
