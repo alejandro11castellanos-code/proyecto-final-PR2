@@ -37,7 +37,10 @@ mensaje claro y todo lo demás funciona.
 
 - El servicio **se duerme tras ~15 minutos sin uso**; la primera petición después tarda de 30 a 60
   segundos en responder (la app mostrará "Comprobando..." o un error de conexión; basta reintentar).
-- Con `autoDeploy: true`, cada `git push` a `main` vuelve a desplegar.
+- **Publicar cambios del backend.** Si el servicio se creó pegando la URL del repositorio público
+  (sin conectar GitHub), Render **no se entera de los `git push`** y no despliega solo. Para
+  publicar una versión nueva: abrir el servicio -> **Manual Deploy** -> **Deploy latest commit**.
+  (Con el repositorio conectado a través de GitHub, `autoDeploy: true` lo haría solo.)
 - Los registros están en la pestaña *Logs* del servicio.
 
 ## Antes de compartir la dirección
