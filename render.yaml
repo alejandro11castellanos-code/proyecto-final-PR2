@@ -1,0 +1,21 @@
+# Blueprint de Render para el backend (la base de datos sigue en Neon).
+# Guía paso a paso: docs/despliegue-render.md
+services:
+  - type: web
+    name: svb-gua-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true # cada push a main vuelve a desplegar
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      # Se pide al crear el servicio: la cadena de conexión de Neon (no se guarda en el repo).
+      - key: DATABASE_URL
+        sync: false
+      # Render genera un secreto aleatorio para firmar los tokens.
+      - key: JWT_SECRET
+        generateValue: true

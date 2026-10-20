@@ -107,7 +107,7 @@ en el que corre: el de Windows (`.exe`/`.msi`) hay que generarlo desde una máqu
 firmado con un certificado de Apple, la primera vez macOS lo bloquea: clic derecho sobre la app,
 **Abrir** y confirmar (o `xattr -cr /Applications/SVB-GUA.app` en la terminal).
 
-**Servidor:** la app necesita un backend al que conectarse. En la pantalla de login, el enlace
+**Servidor:** la app necesita un backend al que conectarse (para publicarlo en Render, ver `docs/despliegue-render.md`). En la pantalla de login, el enlace
 **Cambiar** (junto a "Servidor: ...") permite escribir su dirección (por ejemplo
 `http://192.168.1.10:3000`); la app comprueba que responda y la recuerda en
 `~/.svb-gua/servidor.txt`. Sin configurar, usa `http://localhost:3000`.
