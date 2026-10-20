@@ -1,0 +1,43 @@
+# Genera el instalador de Windows en una máquina Windows de GitHub.
+# Se lanza A MANO: pestaña Actions -> "Instalador de Windows" -> Run workflow.
+# Al terminar, el resultado queda como artefacto descargable (SVB-GUA-Windows).
+name: Instalador de Windows
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: Dirección del servidor (backend) que usará la app por defecto
+        required: false
+        default: https://svb-gua-backend-esov.onrender.com
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Crear instalador y versión portátil
+        working-directory: desktop-client
+        env:
+          SVB_API_URL: ${{ inputs.api_url }}
+        run: ./packaging/crear-instalador-windows.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SVB-GUA-Windows
+          path: desktop-client/target/instalador/*
+          if-no-files-found: error
