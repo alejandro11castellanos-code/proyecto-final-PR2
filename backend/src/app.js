@@ -1,4 +1,5 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import { pool } from './db/pool.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createUsuarioRouter } from './routes/usuarios.js';
@@ -36,9 +37,24 @@ export function createApp({
   qrProvider = createQrProvider(),
   mailer = createMailer(),
   jwtSecret = process.env.JWT_SECRET,
+  // Intentos de login FALLIDOS permitidos por IP en cada ventana. Con el servidor público, sin
+  // límite cualquiera podría probar contraseñas sin freno.
+  loginRateLimit = { windowMs: 15 * 60 * 1000, limit: 20 },
 } = {}) {
   const app = express();
+  // Detrás del proxy de Render hay un salto: así req.ip es la IP real del cliente y no la del proxy.
+  app.set('trust proxy', 1);
   app.use(express.json());
+
+  app.use('/auth/login', rateLimit({
+    ...loginRateLimit,
+    skipSuccessfulRequests: true,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    handler: (_req, res) => res.status(429).json({
+      error: 'Demasiados intentos fallidos. Intente de nuevo en unos minutos.',
+    }),
+  }));
 
   app.get('/health', (_req, res) => {
     res.json({
