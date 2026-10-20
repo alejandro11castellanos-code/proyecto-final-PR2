@@ -10,8 +10,8 @@ import javafx.util.Duration;
 /** Cliente de escritorio: login y, según el rol, panel de administración o punto de venta. */
 public class App extends Application {
 
-    private final AuthClient authClient = AuthClient.fromEnvironment();
-    private final CatalogClient catalogClient = CatalogClient.fromEnvironment();
+    private AuthClient authClient = AuthClient.fromEnvironment();
+    private CatalogClient catalogClient = CatalogClient.fromEnvironment();
 
     @Override
     public void start(Stage stage) {
@@ -26,8 +26,15 @@ public class App extends Application {
      * reiniciar la app — reemplaza la escena del mismo Stage.
      */
     private void mostrarLogin(Stage stage) {
-        LoginView login = new LoginView(authClient, (token, usuario) -> onLogin(stage, token, usuario));
-        cambiarEscena(stage, login, 940, 580, "SVB-GUA — Acceso");
+        LoginView login = new LoginView(authClient, ConfiguracionServidor.urlActual(),
+                url -> {
+                    // Con otra dirección hay que crear de nuevo los clientes HTTP.
+                    authClient = AuthClient.fromEnvironment();
+                    catalogClient = CatalogClient.fromEnvironment();
+                    mostrarLogin(stage);
+                },
+                (token, usuario) -> onLogin(stage, token, usuario));
+        cambiarEscena(stage, login, 940, 620, "SVB-GUA — Acceso");
     }
 
     private void onLogin(Stage stage, String token, AuthClient.Usuario usuario) {

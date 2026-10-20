@@ -89,6 +89,29 @@ mvn javafx:run
 | 6    | Reportes (dashboard JavaFX + exportable con JasperReports) | ✅     |
 | 7    | Empaquetado `.jar` y despliegue final                      | ⬜     |
 
+## Instalador del cliente (macOS)
+
+El cliente se empaqueta como `.dmg` con su propio Java incluido: quien lo instala no necesita
+Java, Maven ni el código.
+
+```bash
+cd desktop-client
+./packaging/crear-instalador-mac.sh        # genera target/instalador/SVB-GUA-1.0.0.dmg (~80 MB)
+./packaging/crear-instalador-mac.sh app-image   # solo la app suelta, para probarla sin instalar
+```
+
+Requiere macOS, JDK 21 (trae `jpackage`) y Maven. `jpackage` solo crea el instalador del sistema
+en el que corre: el de Windows (`.exe`/`.msi`) hay que generarlo desde una máquina Windows.
+
+**Instalar:** abrir el `.dmg` y arrastrar *SVB-GUA* a *Aplicaciones*. Como el instalador no está
+firmado con un certificado de Apple, la primera vez macOS lo bloquea: clic derecho sobre la app,
+**Abrir** y confirmar (o `xattr -cr /Applications/SVB-GUA.app` en la terminal).
+
+**Servidor:** la app necesita un backend al que conectarse. En la pantalla de login, el enlace
+**Cambiar** (junto a "Servidor: ...") permite escribir su dirección (por ejemplo
+`http://192.168.1.10:3000`); la app comprueba que responda y la recuerda en
+`~/.svb-gua/servidor.txt`. Sin configurar, usa `http://localhost:3000`.
+
 ## Extras (fuera del alcance original)
 
 - **Historial de ventas:** pestaña "Historial" (admin, con filtro de
