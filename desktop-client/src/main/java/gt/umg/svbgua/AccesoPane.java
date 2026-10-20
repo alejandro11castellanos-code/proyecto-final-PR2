@@ -19,9 +19,12 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
@@ -51,7 +54,9 @@ public final class AccesoPane extends BorderPane {
         this.client = client;
         this.token = token;
         setPadding(new Insets(16));
-        setTop(construirEscaner());
+        HBox escaner = construirEscaner();
+        BorderPane.setMargin(escaner, new Insets(0, 0, 14, 0));
+        setTop(escaner);
         setCenter(construirPanelesInferiores());
 
         // Solo se refresca mientras la pantalla está visible (fuera de una escena no hace nada).
@@ -66,7 +71,7 @@ public final class AccesoPane extends BorderPane {
         actualizar();
     }
 
-    private VBox construirEscaner() {
+    private HBox construirEscaner() {
         Label titulo = new Label("Registrar ingreso");
         titulo.getStyleClass().add("section-title");
         Label ayuda = new Label("Escriba o pegue el código del boleto. Un lector de QR USB lo escribe solo y envía Enter.");
@@ -87,11 +92,45 @@ public final class AccesoPane extends BorderPane {
         resultado.setVisible(false);
         resultado.setManaged(false);
 
-        VBox escaner = new VBox(10, titulo, ayuda, entrada, resultado);
+        VBox formulario = new VBox(10, titulo, ayuda, entrada, resultado);
+        HBox.setHgrow(formulario, Priority.ALWAYS);
+
+        HBox escaner = new HBox(22, formulario, construirEscanerWeb());
         escaner.getStyleClass().add("card");
         escaner.setPadding(new Insets(18));
-        BorderPane.setMargin(escaner, new Insets(0, 0, 14, 0));
         return escaner;
+    }
+
+    // Escáner en el navegador del celular: se abre con solo escanear este QR (o desde el botón).
+    private VBox construirEscanerWeb() {
+        String direccion = ConfiguracionServidor.urlActual() + "/acceso/";
+
+        Label titulo = new Label("Escanear con el celular");
+        titulo.getStyleClass().add("section-title");
+
+        ImageView qr = new ImageView(new Image(direccion.replace("/acceso/", "/acceso/enlace.png"), 112, 112, true,
+                true, true));
+        qr.setFitWidth(112);
+        qr.setFitHeight(112);
+        // Si el servidor no responde, el QR simplemente no se muestra.
+        qr.imageProperty().addListener((obs, anterior, imagen) -> qr.setVisible(imagen != null && !imagen.isError()));
+        qr.getImage().errorProperty().addListener((obs, antes, error) -> qr.setVisible(!error));
+
+        Button abrir = new Button("Abrir en el navegador");
+        abrir.getStyleClass().add("secondary");
+        abrir.setMinWidth(Region.USE_PREF_SIZE);
+        abrir.setOnAction(evento -> App.abrirEnNavegador(direccion));
+
+        Label ayuda = new Label("Inicie sesión con un usuario de control de acceso.");
+        ayuda.getStyleClass().add("muted");
+        ayuda.setStyle("-fx-font-size: 11px;");
+        ayuda.setWrapText(true);
+        ayuda.setMaxWidth(190);
+
+        VBox panel = new VBox(8, titulo, qr, abrir, ayuda);
+        panel.setAlignment(Pos.TOP_CENTER);
+        panel.setMinWidth(190);
+        return panel;
     }
 
     private HBox construirPanelesInferiores() {
