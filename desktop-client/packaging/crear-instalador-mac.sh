@@ -3,6 +3,8 @@
 #
 #   ./packaging/crear-instalador-mac.sh            # genera target/instalador/SVB-GUA-<version>.dmg
 #   ./packaging/crear-instalador-mac.sh app-image  # solo la app suelta (para probarla sin instalar)
+#   SVB_API_URL=https://mi-servicio.onrender.com ./packaging/crear-instalador-mac.sh
+#                                                  # el instalador ya apunta a ese servidor
 #
 # Requisitos: macOS, JDK 21 (trae jpackage) y Maven. El instalador incluye su propio Java:
 # quien lo instala no necesita tener Java ni JavaFX. jpackage solo genera el instalador del
@@ -26,6 +28,12 @@ rm -rf target/jpackage-input target/instalador
 mkdir -p target/jpackage-input
 cp "$JAR" target/jpackage-input/
 
+OPCIONES_JAVA=(--java-options "-Dfile.encoding=UTF-8")
+if [ -n "${SVB_API_URL:-}" ]; then
+  # Dirección por defecto del servidor; quien instale la app aún puede cambiarla desde el login.
+  OPCIONES_JAVA+=(--java-options "-Dsvb.api.url=${SVB_API_URL}")
+fi
+
 jpackage \
   --type "$TIPO" \
   --name "SVB-GUA" \
@@ -36,7 +44,7 @@ jpackage \
   --main-jar "$(basename "$JAR")" \
   --main-class gt.umg.svbgua.Launcher \
   --icon packaging/SVB-GUA.icns \
-  --java-options "-Dfile.encoding=UTF-8" \
+  "${OPCIONES_JAVA[@]}" \
   --dest target/instalador
 
 echo
