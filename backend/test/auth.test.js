@@ -161,3 +161,40 @@ test('GET /auth/me rechaza tokens ausentes, inválidos y usuarios inexistentes',
   assert.equal(invalid.status, 401);
   assert.equal(deleted.status, 401);
 });
+
+const loginAna = (app, contrasena) =>
+  request(app).post('/auth/login').send({ nombre_usuario: 'ana', contrasena });
+
+test('POST /auth/login responde 429 tras demasiados intentos fallidos', async () => {
+  const app = createApp({ userRepository: repositoryWith(), jwtSecret, loginRateLimit: { limit: 3 } });
+
+  for (let i = 0; i < 3; i += 1) {
+    assert.equal((await loginAna(app, 'incorrecta')).status, 401);
+  }
+  const bloqueado = await loginAna(app, 'incorrecta');
+  assert.equal(bloqueado.status, 429);
+  assert.match(bloqueado.body.error, /demasiados intentos/i);
+});
+
+test('el bloqueo por intentos fallidos también frena una contraseña correcta', async () => {
+  const app = createApp({ userRepository: repositoryWith(), jwtSecret, loginRateLimit: { limit: 2 } });
+
+  await loginAna(app, 'mal');
+  await loginAna(app, 'mal');
+  assert.equal((await loginAna(app, 'clave-correcta')).status, 429);
+});
+
+test('los ingresos correctos no cuentan contra el límite (solo los fallidos)', async () => {
+  const app = createApp({ userRepository: repositoryWith(), jwtSecret, loginRateLimit: { limit: 2 } });
+
+  for (let i = 0; i < 6; i += 1) {
+    assert.equal((await loginAna(app, 'clave-correcta')).status, 200);
+  }
+});
+
+test('el límite de intentos no afecta a otras rutas', async () => {
+  const app = createApp({ userRepository: repositoryWith(), jwtSecret, loginRateLimit: { limit: 1 } });
+  await loginAna(app, 'mal');
+  await loginAna(app, 'mal');
+  assert.equal((await request(app).get('/health')).status, 200);
+});
