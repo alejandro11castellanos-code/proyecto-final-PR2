@@ -32,8 +32,7 @@ public final class CatalogClient {
     }
 
     public static CatalogClient fromEnvironment() {
-        String apiUrl = System.getenv().getOrDefault("SVB_API_URL", "http://localhost:3000");
-        return new CatalogClient(HttpClient.newHttpClient(), URI.create(apiUrl));
+        return new CatalogClient(HttpClient.newHttpClient(), URI.create(ConfiguracionServidor.urlActual()));
     }
 
     // ---- Usuarios ----

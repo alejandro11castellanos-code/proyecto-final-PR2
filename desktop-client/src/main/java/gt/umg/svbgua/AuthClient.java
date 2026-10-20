@@ -22,8 +22,7 @@ public final class AuthClient {
     }
 
     public static AuthClient fromEnvironment() {
-        String apiUrl = System.getenv().getOrDefault("SVB_API_URL", "http://localhost:3000");
-        return new AuthClient(HttpClient.newHttpClient(), new ObjectMapper(), URI.create(apiUrl));
+        return new AuthClient(HttpClient.newHttpClient(), new ObjectMapper(), URI.create(ConfiguracionServidor.urlActual()));
     }
 
     public LoginResult login(String username, String password) {
