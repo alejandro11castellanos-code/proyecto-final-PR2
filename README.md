@@ -107,6 +107,20 @@ en el que corre: el de Windows (`.exe`/`.msi`) hay que generarlo desde una máqu
 firmado con un certificado de Apple, la primera vez macOS lo bloquea: clic derecho sobre la app,
 **Abrir** y confirmar (o `xattr -cr /Applications/SVB-GUA.app` en la terminal).
 
+### Windows
+
+El instalador de Windows lo arma GitHub en una máquina Windows (hace falta un flujo propio porque
+`jpackage` solo genera el instalador del sistema donde corre). En la pestaña **Actions** del
+repositorio: *Instalador de Windows* -> **Run workflow** (se puede indicar la dirección del
+servidor). Al terminar, el artefacto **SVB-GUA-Windows** contiene:
+
+- `SVB-GUA-1.0.0.exe`: instalador por usuario (no pide permisos de administrador), con acceso
+  directo y entrada en el menú Inicio.
+- `SVB-GUA-portatil.zip`: versión portátil; se descomprime y se abre `SVB-GUA\SVB-GUA.exe`, sin instalar.
+
+Como no están firmados, Windows muestra "Windows protegió su PC": clic en **Más información** y
+luego **Ejecutar de todas formas**. Ambos incluyen su propio Java.
+
 **Servidor:** la app necesita un backend al que conectarse (para publicarlo en Render, ver `docs/despliegue-render.md`). En la pantalla de login, el enlace
 **Cambiar** (junto a "Servidor: ...") permite escribir su dirección (por ejemplo
 `http://192.168.1.10:3000`); la app comprueba que responda y la recuerda en
