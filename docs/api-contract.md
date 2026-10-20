@@ -439,3 +439,30 @@ exigen administrador o vendedor.
 `database/migrations/001_boletos_y_control_de_acceso.sql` (rol, tabla `boletos` y boletos de
 las ventas existentes; se puede ejecutar más de una vez). Una base nueva solo necesita
 `schema.sql`. El seed agrega el usuario `puerta1` (rol `acceso`).
+
+
+## Escáner web (`/acceso/`)
+
+Página que sirve el propio backend para registrar ingresos desde el navegador de un celular o una
+laptop, con la cámara. Usa la misma API y el mismo login (`POST /auth/login`, `POST /accesos`), así
+que lo que se escanea ahí aparece en la pantalla de Control de acceso de la app de escritorio.
+
+| Ruta | Qué sirve |
+|------|-----------|
+| `GET /acceso/` | La página (HTML, `scanner.css`, `scanner.js`, `nucleo.js`) |
+| `GET /acceso/jsqr.js` | Librería de lectura de QR (`jsQR`), servida desde `node_modules` |
+| `GET /acceso/enlace.png` | QR con la dirección de la propia página, para abrirla desde el celular |
+
+- **HTTPS.** Los navegadores solo entregan la cámara en páginas HTTPS (o `localhost`). En Render la
+  dirección ya es HTTPS; en local solo funciona desde la misma máquina.
+- **Acceso.** La página es pública, pero no hace nada sin iniciar sesión con un usuario
+  `administrador` o `acceso`; con otro rol la propia página lo rechaza y la API devuelve 403.
+- **Seguridad de la página.** `Content-Security-Policy` estricta: solo carga scripts y estilos de este
+  mismo servidor, sin código en línea, y solo se conecta a este mismo servidor; `Permissions-Policy`
+  permite la cámara únicamente al propio sitio. La sesión vive en `sessionStorage` (se borra al cerrar
+  la pestaña).
+- **Lectura.** Cada ~120 ms toma un cuadro de la cámara y lo decodifica en el navegador. Un código
+  se ignora durante 5 s después de leerlo (el QR sigue a la vista), un QR que no tiene la forma de un
+  boleto de SVB-GUA se descarta sin llamar al servidor, y cada lectura va con sonido y vibración
+  distintos para aceptado/rechazado.
+- La lógica sin navegador está en `public/acceso/nucleo.js` y se prueba en Node.

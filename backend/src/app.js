@@ -9,6 +9,7 @@ import { createConciertoRouter } from './routes/conciertos.js';
 import { createInventarioRouter } from './routes/inventario.js';
 import { createVentaRouter } from './routes/ventas.js';
 import { createAccesoRouter } from './routes/accesos.js';
+import { createAccesoWebRouter } from './routes/acceso-web.js';
 import { createReporteRouter } from './routes/reportes.js';
 import { createUserRepository } from './repositories/users.js';
 import { createArtistaRepository } from './repositories/artistas.js';
@@ -78,6 +79,7 @@ export function createApp({
   );
   app.use('/ventas', createVentaRouter({ ventaRepository, qrProvider, mailer, jwtSecret }));
   app.use('/accesos', createAccesoRouter({ accesoRepository, jwtSecret }));
+  app.use('/acceso', createAccesoWebRouter());
   app.use('/reportes', createReporteRouter({ reporteRepository, jwtSecret }));
 
   // Express identifica los errores de parseo JSON antes de llegar a las rutas.
