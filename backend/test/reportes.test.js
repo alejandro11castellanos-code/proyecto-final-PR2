@@ -141,3 +141,95 @@ for (const [descripcion, query] of [
     assert.equal(recibidos.length, 0, 'no debe consultar la BD con filtros inválidos');
   });
 }
+
+// --- Tabla cruzada (pivote) ---
+
+const celdas = [
+  { fila: 'Gira', columna: 'Platea', valor: 3 },
+  { fila: 'Gira', columna: 'VIP', valor: 1 },
+];
+
+function fakeRepositoryCruzado() {
+  const llamadas = [];
+  const repo = {
+    ...fakeReporteRepository(),
+    cruzado: async (filtros, ejes) => {
+      llamadas.push({ filtros, ejes });
+      return celdas;
+    },
+  };
+  return { repo, llamadas };
+}
+
+test('GET /reportes/cruzado exige autenticación', async () => {
+  const { repo } = fakeRepositoryCruzado();
+  const response = await request(createApp({ reporteRepository: repo, jwtSecret })).get('/reportes/cruzado');
+  assert.equal(response.status, 401);
+});
+
+test('GET /reportes/cruzado rechaza a un vendedor', async () => {
+  const { repo } = fakeRepositoryCruzado();
+  const response = await request(createApp({ reporteRepository: repo, jwtSecret }))
+    .get('/reportes/cruzado')
+    .set('Authorization', `Bearer ${vendedorToken}`);
+  assert.equal(response.status, 403);
+});
+
+test('GET /reportes/cruzado usa concierto × localidad en boletos por defecto', async () => {
+  const { repo, llamadas } = fakeRepositoryCruzado();
+  const response = await request(createApp({ reporteRepository: repo, jwtSecret }))
+    .get('/reportes/cruzado')
+    .set('Authorization', `Bearer ${adminToken}`);
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(response.body, { filas: 'concierto', columnas: 'localidad', medida: 'boletos', celdas });
+  assert.deepEqual(llamadas, [{
+    filtros: sinFiltros,
+    ejes: { filas: 'concierto', columnas: 'localidad', medida: 'boletos' },
+  }]);
+});
+
+test('GET /reportes/cruzado respeta ejes, medida y filtros pedidos', async () => {
+  const { repo, llamadas } = fakeRepositoryCruzado();
+  const response = await request(createApp({ reporteRepository: repo, jwtSecret }))
+    .get('/reportes/cruzado?filas=vendedor&columnas=dia&medida=ingresos&desde=2026-09-01&artista=3')
+    .set('Authorization', `Bearer ${adminToken}`);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.filas, 'vendedor');
+  assert.equal(response.body.columnas, 'dia');
+  assert.equal(response.body.medida, 'ingresos');
+  assert.deepEqual(llamadas[0].ejes, { filas: 'vendedor', columnas: 'dia', medida: 'ingresos' });
+  assert.deepEqual(llamadas[0].filtros, { ...sinFiltros, desde: '2026-09-01', idArtista: 3 });
+});
+
+for (const [descripcion, query] of [
+  ['una dimensión de filas desconocida', 'filas=color'],
+  ['una dimensión de columnas desconocida', 'columnas=1%3BDROP'],
+  ['la misma dimensión en filas y columnas', 'filas=artista&columnas=artista'],
+  ['la misma dimensión por defecto (columnas = localidad)', 'filas=localidad'],
+  ['una medida desconocida', 'medida=promedio'],
+  ['un filtro inválido', 'desde=01/09/2026'],
+]) {
+  test(`GET /reportes/cruzado responde 400 ante ${descripcion}`, async () => {
+    const { repo, llamadas } = fakeRepositoryCruzado();
+    const response = await request(createApp({ reporteRepository: repo, jwtSecret }))
+      .get(`/reportes/cruzado?${query}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    assert.equal(response.status, 400);
+    assert.ok(response.body.error);
+    assert.equal(llamadas.length, 0, 'no debe consultar la BD con parámetros inválidos');
+  });
+}
+
+test('GET /reportes/cruzado propaga un fallo del repositorio como 500', async () => {
+  const { repo } = fakeRepositoryCruzado();
+  repo.cruzado = async () => {
+    throw new Error('boom');
+  };
+  const response = await request(createApp({ reporteRepository: repo, jwtSecret }))
+    .get('/reportes/cruzado')
+    .set('Authorization', `Bearer ${adminToken}`);
+  assert.equal(response.status, 500);
+});

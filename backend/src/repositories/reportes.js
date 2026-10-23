@@ -52,6 +52,21 @@ function donde(condiciones) {
   return condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
 }
 
+// Dimensiones de la tabla cruzada: `id` agrupa (dos conciertos pueden
+// llamarse igual) y `etiqueta` es lo que ve el usuario. Lista cerrada: son
+// las únicas expresiones que se concatenan al SQL, nunca texto del usuario.
+const DIMENSIONES = {
+  concierto: { id: 'c.id_concierto', etiqueta: 'c.titulo_evento' },
+  localidad: { id: 'l.id_localidad', etiqueta: 'l.nombre' },
+  artista: { id: 'a.id_artista', etiqueta: 'a.nombre_artistico' },
+  vendedor: { id: 'u.id_usuario', etiqueta: 'u.nombre_completo' },
+  dia: { id: "TO_CHAR(h.fecha_venta, 'YYYY-MM-DD')", etiqueta: "TO_CHAR(h.fecha_venta, 'YYYY-MM-DD')" },
+};
+const MEDIDAS = {
+  boletos: 'SUM(h.cantidad)::int',
+  ingresos: 'SUM(h.subtotal)::numeric(12,2)',
+};
+
 export function createReporteRepository(database) {
   async function consultar(filtros, armar) {
     const ctx = crearParametros();
@@ -161,6 +176,29 @@ export function createReporteRepository(database) {
                 GROUP BY l.id_localidad, l.nombre
                 ORDER BY boletos DESC, l.nombre`;
       });
+      return result.rows;
+    },
+
+    // Pivote: una fila por combinación fila × columna que tiene ventas. Una
+    // combinación sin ventas no aparece (no se inventan ceros para pares que
+    // quizá ni existen, p. ej. una localidad que ese concierto no ofrece).
+    async cruzado(filtros = SIN_FILTROS, { filas, columnas, medida }) {
+      const f = DIMENSIONES[filas];
+      const c = DIMENSIONES[columnas];
+      const valor = MEDIDAS[medida];
+      if (!f || !c || !valor) throw new Error('Ejes de tabla cruzada inválidos.');
+
+      const result = await consultar(
+        filtros,
+        () => `SELECT ${f.etiqueta} AS fila, ${c.etiqueta} AS columna, ${valor} AS valor
+               FROM hechos h
+               JOIN conciertos c ON c.id_concierto = h.id_concierto
+               JOIN artistas a ON a.id_artista = h.id_artista
+               JOIN localidades l ON l.id_localidad = h.id_localidad
+               JOIN usuarios u ON u.id_usuario = h.id_vendedor
+               GROUP BY ${f.id}, ${f.etiqueta}, ${c.id}, ${c.etiqueta}
+               ORDER BY fila, columna`,
+      );
       return result.rows;
     },
 
