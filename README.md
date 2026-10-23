@@ -170,6 +170,11 @@ luego **Ejecutar de todas formas**. Ambos incluyen su propio Java.
   foto del inventario, así que solo responde a artista, concierto y
   localidad.
 
+- **Tabla cruzada (pivote):** en Reportes se elige qué va en filas, qué en
+  columnas y qué medir (boletos o ingresos) entre concierto, localidad, artista,
+  vendedor y día. Se ve como mapa de calor con totales y el PDF la incluye en
+  su última página. Por defecto cruza concierto × localidad.
+
 - **Alerta de últimos boletos:** la columna "Disponibles" en Aforo y en el
   punto de venta resalta en naranja "¡Últimos N!" cuando quedan 10 boletos
   o menos de una localidad, y en rojo "AGOTADO" cuando llega a 0. Es un

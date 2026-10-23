@@ -71,6 +71,8 @@ public final class ReportesPane extends BorderPane {
     private final VBox contenido = new VBox(20);
     private final Button exportarButton = new Button("Exportar PDF");
     private Dashboard ultimoDashboard;
+    private Pivote ultimoPivote;
+    private final TablaCruzadaPane tablaCruzada;
     private String ultimaDescripcionFiltros = FiltrosReporte.NINGUNO.descripcion(null, null, null, null);
 
     private final DatePicker desdePicker = new DatePicker();
@@ -87,6 +89,9 @@ public final class ReportesPane extends BorderPane {
         this.client = client;
         this.token = token;
         this.nombreCompleto = nombreCompleto;
+        this.tablaCruzada = new TablaCruzadaPane(client, token, pivote -> ultimoPivote = pivote);
+        tablaCruzada.setPadding(new Insets(16));
+        tablaCruzada.getStyleClass().add("card");
         setPadding(new Insets(16));
         setTop(buildEncabezado());
 
@@ -267,6 +272,7 @@ public final class ReportesPane extends BorderPane {
         // mientras carga, el PDF debe describir los filtros del dashboard que se ve.
         FiltrosReporte filtros = filtrosAplicados;
         String descripcion = describir(filtros);
+        tablaCruzada.cargar(filtros);
         Async.run(
                 () -> client.obtenerDashboard(token, filtros),
                 dashboard -> mostrar(dashboard, descripcion, filtros.hayFiltros()),
@@ -289,13 +295,14 @@ public final class ReportesPane extends BorderPane {
         }
 
         Dashboard dashboard = ultimoDashboard;
+        Pivote pivote = ultimoPivote;
         String descripcion = ultimaDescripcionFiltros;
         exportarButton.setDisable(true);
         status.setText("Generando PDF...");
         Async.run(
                 () -> {
                     try {
-                        ReporteVentasService.generar(dashboard, nombreCompleto, descripcion, destino);
+                        ReporteVentasService.generar(dashboard, pivote, nombreCompleto, descripcion, destino);
                         return destino;
                     } catch (JRException error) {
                         throw new RuntimeException(error.getMessage(), error);
@@ -336,6 +343,7 @@ public final class ReportesPane extends BorderPane {
                 barras,
                 seccion("Ventas por día", lineChartPorDia(dashboard.porDia())),
                 seccion("Boletos por localidad", pieChartLocalidad(dashboard.porLocalidad())),
+                tablaCruzada,
                 seccion("Ocupación por concierto (inventario actual: no depende de fechas ni vendedor)", ocupacionPane(dashboard.ocupacion())));
         Animaciones.entradaEnCascada(contenido.getChildren());
     }
