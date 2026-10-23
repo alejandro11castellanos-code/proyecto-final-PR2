@@ -343,11 +343,43 @@ El destino de estos datos: la pantalla de administración los grafica con
 los charts nativos de JavaFX (dashboard en vivo); JasperReports queda para
 el reporte exportable/imprimible aparte (PDF), no para esta pantalla.
 
+### Tabla cruzada (pivote)
+
+`GET /reportes/cruzado` — exclusivo de `administrador`. Cruza dos dimensiones
+y mide una cantidad; acepta los mismos filtros que el dashboard.
+
+| Parámetro | Valores | Por defecto |
+|-----------|---------|-------------|
+| `filas`, `columnas` | `concierto`, `localidad`, `artista`, `vendedor`, `dia` (distintas entre sí) | `concierto` × `localidad` |
+| `medida` | `boletos` (entero), `ingresos` (decimal como texto, igual que el resto) | `boletos` |
+
+```json
+{
+  "filas": "concierto", "columnas": "localidad", "medida": "boletos",
+  "celdas": [{ "fila": "Gira Aniversario 2026", "columna": "Platea", "valor": 15 }]
+}
+```
+
+Formato plano (una celda por combinación) para que cada cliente arme su
+matriz. Solo aparecen las combinaciones **con ventas**: no se inventan
+ceros para pares que quizá ni existen (una localidad que ese concierto no
+ofrece). Una dimensión o medida desconocida, o la misma dimensión en filas y
+columnas, responde `400`. Las expresiones SQL de cada dimensión salen de una
+lista cerrada del repositorio; el texto del usuario nunca se concatena.
+
+Verificado contra Neon: las 40 combinaciones (5 × 4 dimensiones × 2
+medidas) suman exactamente `resumen` (boletos e ingresos).
+
+El cliente la muestra como mapa de calor con totales (`TablaCruzadaPane`) y
+el PDF la incluye como última página apaisada con un `crosstab` nativo de
+JasperReports (`tabla_cruzada.jrxml`). Para agregar otra dimensión basta una
+entrada en `DIMENSIONES` del repositorio y en la ruta.
+
 ### Exportación a PDF (JasperReports)
 
 El botón "Exportar PDF" del dashboard (`ReportesPane`) arma el mismo
 `Dashboard` que ya se graficó y se lo pasa a `ReporteVentasService`, que
-compila y llena seis plantillas JRXML (portada con KPIs y, por cada corte,
+compila y llena las plantillas JRXML (portada con KPIs y, por cada corte,
 una gráfica JasperReports/JFreeChart más su tabla: concierto, artista y
 vendedor en barras, ventas por día en línea y boletos por localidad en
 pastel) y las concatena en un solo PDF vía
