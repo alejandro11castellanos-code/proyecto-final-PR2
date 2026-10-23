@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="tabla_cruzada" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="782" leftMargin="30" rightMargin="30" topMargin="30" bottomMargin="30"
+              whenNoDataType="NoDataSection">
+  <!-- Mapa de calor: cuanto mas cerca del maximo, mas intenso el azul. -->
+  <style name="calor" fontSize="9">
+    <conditionalStyle>
+      <conditionExpression><![CDATA[$V{hay} > 0 && $P{maximo} > 0 && $V{valor} >= 0.66 * $P{maximo}]]></conditionExpression>
+      <style backcolor="#9FB9D6" mode="Opaque"/>
+    </conditionalStyle>
+    <conditionalStyle>
+      <conditionExpression><![CDATA[$V{hay} > 0 && $P{maximo} > 0 && $V{valor} >= 0.33 * $P{maximo}]]></conditionExpression>
+      <style backcolor="#C8D7E8" mode="Opaque"/>
+    </conditionalStyle>
+    <conditionalStyle>
+      <conditionExpression><![CDATA[$V{hay} > 0]]></conditionExpression>
+      <style backcolor="#E8EFF7" mode="Opaque"/>
+    </conditionalStyle>
+  </style>
+
+  <!-- Filas del datasource: filaClave/columnaClave = "indice|etiqueta" (el indice, con ceros a la izquierda, fija el orden
+       del crosstab; la etiqueta es lo que se muestra), valorNum = boletos o ingresos de esa combinacion. -->
+  <parameter name="titulo" class="java.lang.String"/>
+  <parameter name="esquina" class="java.lang.String"/>
+  <parameter name="esDinero" class="java.lang.Boolean"/>
+  <parameter name="maximo" class="java.lang.Double"/>
+  <field name="filaClave" class="java.lang.String"/>
+  <field name="columnaClave" class="java.lang.String"/>
+  <field name="valorNum" class="java.lang.Double"/>
+
+  <title>
+    <band height="34">
+      <textField>
+        <reportElement x="0" y="0" width="782" height="24"/>
+        <textElement><font size="15" isBold="true"/></textElement>
+        <textFieldExpression><![CDATA[$P{titulo}]]></textFieldExpression>
+      </textField>
+    </band>
+  </title>
+
+  <summary>
+    <band height="420">
+      <crosstab>
+        <reportElement x="0" y="0" width="782" height="400"/>
+        <!-- Un crosstab no ve los parametros del reporte: hay que pasarselos. -->
+        <crosstabParameter name="esquina" class="java.lang.String">
+          <parameterValueExpression><![CDATA[$P{esquina}]]></parameterValueExpression>
+        </crosstabParameter>
+        <crosstabParameter name="esDinero" class="java.lang.Boolean">
+          <parameterValueExpression><![CDATA[$P{esDinero}]]></parameterValueExpression>
+        </crosstabParameter>
+        <crosstabParameter name="maximo" class="java.lang.Double">
+          <parameterValueExpression><![CDATA[$P{maximo}]]></parameterValueExpression>
+        </crosstabParameter>
+        <crosstabHeaderCell>
+          <cellContents backcolor="#4E79A7" mode="Opaque">
+            <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
+            <textField>
+              <reportElement x="0" y="0" width="160" height="22" forecolor="#FFFFFF"/>
+              <box leftPadding="6" rightPadding="4"/>
+              <textElement verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
+              <textFieldExpression><![CDATA[$P{esquina}]]></textFieldExpression>
+            </textField>
+          </cellContents>
+        </crosstabHeaderCell>
+
+        <rowGroup name="fila" width="160" totalPosition="End">
+          <bucket class="java.lang.String">
+            <bucketExpression><![CDATA[$F{filaClave}]]></bucketExpression>
+          </bucket>
+          <crosstabRowHeader>
+            <cellContents backcolor="#F0F2F8" mode="Opaque">
+              <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
+              <textField>
+                <reportElement x="0" y="0" width="160" height="22"/>
+                <box leftPadding="6" rightPadding="4"/>
+                <textElement verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$V{fila}.substring($V{fila}.indexOf("|") + 1)]]></textFieldExpression>
+              </textField>
+            </cellContents>
+          </crosstabRowHeader>
+          <crosstabTotalRowHeader>
+            <cellContents backcolor="#CFD4EE" mode="Opaque">
+              <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
+              <staticText>
+                <reportElement x="0" y="0" width="160" height="22"/>
+                <box leftPadding="6" rightPadding="4"/>
+                <textElement verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
+                <text><![CDATA[Total]]></text>
+              </staticText>
+            </cellContents>
+          </crosstabTotalRowHeader>
+        </rowGroup>
+
+        <columnGroup name="columna" height="22" totalPosition="End">
+          <bucket class="java.lang.String">
+            <bucketExpression><![CDATA[$F{columnaClave}]]></bucketExpression>
+          </bucket>
+          <crosstabColumnHeader>
+            <cellContents backcolor="#4E79A7" mode="Opaque">
+              <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
+              <textField isStretchWithOverflow="false">
+                <reportElement x="0" y="0" width="82" height="22" forecolor="#FFFFFF"/>
+                <box leftPadding="2" rightPadding="2"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font size="8" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$V{columna}.substring($V{columna}.indexOf("|") + 1)]]></textFieldExpression>
+              </textField>
+            </cellContents>
+          </crosstabColumnHeader>
+          <crosstabTotalColumnHeader>
+            <cellContents backcolor="#CFD4EE" mode="Opaque">
+              <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
+              <staticText>
+                <reportElement x="0" y="0" width="82" height="22"/>
+                <box leftPadding="2" rightPadding="2"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
+                <text><![CDATA[Total]]></text>
+              </staticText>
+            </cellContents>
+          </crosstabTotalColumnHeader>
+        </columnGroup>
+
+        <measure name="valor" class="java.lang.Double" calculation="Sum">
+          <measureExpression><![CDATA[$F{valorNum}]]></measureExpression>
+        </measure>
+        <!-- Cuantas combinaciones hay en la celda: 0 = sin ventas (se muestra "—", no 0). -->
+        <measure name="hay" class="java.lang.Integer" calculation="Count">
+          <measureExpression><![CDATA[$F{valorNum}]]></measureExpression>
+        </measure>
+
+        <!-- Celda de datos -->
+        <crosstabCell width="82" height="22">
+          <cellContents>
+            <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
+            <textField isBlankWhenNull="false">
+              <reportElement style="calor" x="0" y="0" width="82" height="22"/>
+              <box leftPadding="2" rightPadding="6"/>
+              <textElement textAlignment="Right" verticalAlignment="Middle"/>
+              <textFieldExpression><![CDATA[$V{hay} == 0 ? "—" : ($P{esDinero} ? String.format(new java.util.Locale("es", "GT"), "Q %,.2f", $V{valor}) : String.format(new java.util.Locale("es", "GT"), "%,d", Math.round($V{valor})))]]></textFieldExpression>
+            </textField>
+          </cellContents>
+        </crosstabCell>
+        <!-- Total de la fila (ultima columna) -->
+        <crosstabCell width="82" height="22" columnTotalGroup="columna">
+          <cellContents backcolor="#E6E9F6" mode="Opaque">
+            <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
+            <textField>
+              <reportElement x="0" y="0" width="82" height="22"/>
+              <box leftPadding="2" rightPadding="6"/>
+              <textElement textAlignment="Right" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
+              <textFieldExpression><![CDATA[$V{hay} == 0 ? "—" : ($P{esDinero} ? String.format(new java.util.Locale("es", "GT"), "Q %,.2f", $V{valor}) : String.format(new java.util.Locale("es", "GT"), "%,d", Math.round($V{valor})))]]></textFieldExpression>
+            </textField>
+          </cellContents>
+        </crosstabCell>
+        <!-- Total de la columna (ultima fila) -->
+        <crosstabCell width="82" height="22" rowTotalGroup="fila">
+          <cellContents backcolor="#E6E9F6" mode="Opaque">
+            <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
+            <textField>
+              <reportElement x="0" y="0" width="82" height="22"/>
+              <box leftPadding="2" rightPadding="6"/>
+              <textElement textAlignment="Right" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
+              <textFieldExpression><![CDATA[$V{hay} == 0 ? "—" : ($P{esDinero} ? String.format(new java.util.Locale("es", "GT"), "Q %,.2f", $V{valor}) : String.format(new java.util.Locale("es", "GT"), "%,d", Math.round($V{valor})))]]></textFieldExpression>
+            </textField>
+          </cellContents>
+        </crosstabCell>
+        <!-- Gran total -->
+        <crosstabCell width="82" height="22" rowTotalGroup="fila" columnTotalGroup="columna">
+          <cellContents backcolor="#CFD4EE" mode="Opaque">
+            <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
+            <textField>
+              <reportElement x="0" y="0" width="82" height="22"/>
+              <box leftPadding="2" rightPadding="6"/>
+              <textElement textAlignment="Right" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
+              <textFieldExpression><![CDATA[$V{hay} == 0 ? "—" : ($P{esDinero} ? String.format(new java.util.Locale("es", "GT"), "Q %,.2f", $V{valor}) : String.format(new java.util.Locale("es", "GT"), "%,d", Math.round($V{valor})))]]></textFieldExpression>
+            </textField>
+          </cellContents>
+        </crosstabCell>
+        <whenNoDataCell>
+          <cellContents>
+            <staticText>
+              <reportElement x="0" y="0" width="200" height="22"/>
+              <textElement><font size="9" isItalic="true"/></textElement>
+              <text><![CDATA[Sin datos.]]></text>
+            </staticText>
+          </cellContents>
+        </whenNoDataCell>
+      </crosstab>
+    </band>
+  </summary>
+
+  <noData>
+    <band height="60">
+      <textField>
+        <reportElement x="0" y="0" width="782" height="24"/>
+        <textElement><font size="15" isBold="true"/></textElement>
+        <textFieldExpression><![CDATA[$P{titulo}]]></textFieldExpression>
+      </textField>
+      <staticText>
+        <reportElement x="0" y="30" width="782" height="24"/>
+        <textElement><font size="11" isItalic="true"/></textElement>
+        <text><![CDATA[No hay ventas para los filtros seleccionados.]]></text>
+      </staticText>
+    </band>
+  </noData>
+</jasperReport>

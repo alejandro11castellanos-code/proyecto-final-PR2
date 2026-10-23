@@ -31,7 +31,7 @@ import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
 /**
  * Genera el reporte de ventas en PDF con JasperReports: portada con los KPIs
  * + una tabla con su gráfica por cada corte (concierto, artista, vendedor,
- * día y localidad) — los mismos que grafica el dashboard en vivo. Cada sección es una plantilla JasperReports chica e
+ * día y localidad) — los mismos que grafica el dashboard en vivo — más la tabla cruzada activa. Cada sección es una plantilla JasperReports chica e
  * independiente; se combinan al exportar en un solo PDF (vía
  * {@link JRPdfExporter}), en vez de usar subreports — más simple de
  * mantener a mano sin un diseñador visual.
@@ -47,15 +47,19 @@ public final class ReporteVentasService {
     private ReporteVentasService() {
     }
 
-    public static void generar(Dashboard dashboard, String generadoPor, String filtrosAplicados, File destino)
-            throws JRException {
-        List<JasperPrint> secciones = List.of(
+    /** @param pivote tabla cruzada que se ve en pantalla; null si todavía no cargó (el PDF sale sin esa sección). */
+    public static void generar(Dashboard dashboard, Pivote pivote, String generadoPor, String filtrosAplicados,
+            File destino) throws JRException {
+        List<JasperPrint> secciones = new ArrayList<>(List.of(
                 llenarPortada(dashboard, generadoPor, filtrosAplicados),
                 llenarPorConcierto(dashboard),
                 llenarPorArtista(dashboard),
                 llenarPorVendedor(dashboard),
                 llenarPorDia(dashboard),
-                llenarPorLocalidad(dashboard));
+                llenarPorLocalidad(dashboard)));
+        if (pivote != null) {
+            secciones.add(llenarTablaCruzada(pivote));
+        }
 
         JRPdfExporter exportador = new JRPdfExporter();
         exportador.setExporterInput(SimpleExporterInput.getInstance(secciones));
@@ -170,6 +174,37 @@ public final class ReporteVentasService {
         boolean hayDatos = dashboard.porLocalidad().stream().anyMatch(v -> v.boletos() > 0);
         JasperReport reporte = compilar("por_localidad.jrxml");
         return JasperFillManager.fillReport(reporte, parametrosConDatos(hayDatos), new JRMapCollectionDataSource(filas));
+    }
+
+    private static JasperPrint llenarTablaCruzada(Pivote pivote) throws JRException {
+        // El índice delante de cada etiqueta ("003|VIP") fija el orden en el crosstab, que ordena por el
+        // texto del bucket: sin él, "20 de sep" quedaría antes que "5 de sep".
+        List<String> filas = pivote.filas();
+        List<String> columnas = pivote.columnas();
+        List<Map<String, ?>> celdas = new ArrayList<>();
+        for (int i = 0; i < filas.size(); i++) {
+            for (int j = 0; j < columnas.size(); j++) {
+                Double valor = pivote.valor(filas.get(i), columnas.get(j));
+                if (valor == null) {
+                    continue;
+                }
+                Map<String, Object> celda = new HashMap<>();
+                celda.put("filaClave", String.format("%03d|%s", i, Pivote.presentar(pivote.dimensionFilas(), filas.get(i))));
+                celda.put("columnaClave",
+                        String.format("%03d|%s", j, Pivote.presentar(pivote.dimensionColumnas(), columnas.get(j))));
+                celda.put("valorNum", valor);
+                celdas.add(celda);
+            }
+        }
+
+        Map<String, Object> parametros = new HashMap<>();
+        parametros.put("titulo", pivote.titulo());
+        parametros.put("esquina", Pivote.DIMENSIONES.get(pivote.dimensionFilas()) + " \\ "
+                + Pivote.DIMENSIONES.get(pivote.dimensionColumnas()));
+        parametros.put("esDinero", pivote.esDinero());
+        parametros.put("maximo", pivote.maximo());
+        return JasperFillManager.fillReport(compilar("tabla_cruzada.jrxml"), parametros,
+                new JRMapCollectionDataSource(celdas));
     }
 
     // Mutable a propósito: JasperReports le hace put() internamente.

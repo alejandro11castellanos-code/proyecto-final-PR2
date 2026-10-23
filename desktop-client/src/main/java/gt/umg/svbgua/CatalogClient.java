@@ -209,6 +209,19 @@ public final class CatalogClient {
         }
     }
 
+    public TablaCruzada obtenerTablaCruzada(String token, FiltrosReporte filtros, String filas, String columnas,
+            String medida) {
+        String filtrosQuery = filtros.queryString();
+        String ejes = "filas=" + filas + "&columnas=" + columnas + "&medida=" + medida;
+        String ruta = "/reportes/cruzado" + (filtrosQuery.isEmpty() ? "?" : filtrosQuery + "&") + ejes;
+        HttpResponse<String> response = execute(newRequest("GET", ruta, token, null));
+        try {
+            return mapper.readValue(response.body(), TablaCruzada.class);
+        } catch (IOException error) {
+            throw new ApiException("La respuesta del servidor no es válida.", error);
+        }
+    }
+
     // ---- infraestructura HTTP ----
 
     private <T> List<T> getList(String path, String token, Class<T[]> arrayType) {
@@ -384,6 +397,13 @@ public final class CatalogClient {
     }
 
     public record Ocupacion(int idConcierto, String tituloEvento, int cantidadTotal, int vendido) {
+    }
+
+    /** Una combinación fila × columna con ventas; {@code valor} es un entero (boletos) o un decimal (ingresos). */
+    public record Celda(String fila, String columna, String valor) {
+    }
+
+    public record TablaCruzada(String filas, String columnas, String medida, List<Celda> celdas) {
     }
 
     public record Dashboard(
