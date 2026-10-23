@@ -58,7 +58,7 @@
           <cellContents backcolor="#4E79A7" mode="Opaque">
             <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
             <textField>
-              <reportElement x="0" y="0" width="160" height="22" forecolor="#FFFFFF"/>
+              <reportElement x="0" y="0" width="150" height="20" forecolor="#FFFFFF"/>
               <box leftPadding="6" rightPadding="4"/>
               <textElement verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
               <textFieldExpression><![CDATA[$P{esquina}]]></textFieldExpression>
@@ -66,7 +66,7 @@
           </cellContents>
         </crosstabHeaderCell>
 
-        <rowGroup name="fila" width="160" totalPosition="End">
+        <rowGroup name="fila" width="150" totalPosition="End">
           <bucket class="java.lang.String">
             <bucketExpression><![CDATA[$F{filaClave}]]></bucketExpression>
           </bucket>
@@ -74,7 +74,7 @@
             <cellContents backcolor="#F0F2F8" mode="Opaque">
               <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
               <textField>
-                <reportElement x="0" y="0" width="160" height="22"/>
+                <reportElement x="0" y="0" width="150" height="20"/>
                 <box leftPadding="6" rightPadding="4"/>
                 <textElement verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
                 <textFieldExpression><![CDATA[$V{fila}.substring($V{fila}.indexOf("|") + 1)]]></textFieldExpression>
@@ -85,7 +85,7 @@
             <cellContents backcolor="#CFD4EE" mode="Opaque">
               <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
               <staticText>
-                <reportElement x="0" y="0" width="160" height="22"/>
+                <reportElement x="0" y="0" width="150" height="20"/>
                 <box leftPadding="6" rightPadding="4"/>
                 <textElement verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
                 <text><![CDATA[Total]]></text>
@@ -94,7 +94,7 @@
           </crosstabTotalRowHeader>
         </rowGroup>
 
-        <columnGroup name="columna" height="22" totalPosition="End">
+        <columnGroup name="columna" height="20" totalPosition="End">
           <bucket class="java.lang.String">
             <bucketExpression><![CDATA[$F{columnaClave}]]></bucketExpression>
           </bucket>
@@ -102,7 +102,7 @@
             <cellContents backcolor="#4E79A7" mode="Opaque">
               <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
               <textField isStretchWithOverflow="false">
-                <reportElement x="0" y="0" width="82" height="22" forecolor="#FFFFFF"/>
+                <reportElement x="0" y="0" width="78" height="20" forecolor="#FFFFFF"/>
                 <box leftPadding="2" rightPadding="2"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle"><font size="8" isBold="true"/></textElement>
                 <textFieldExpression><![CDATA[$V{columna}.substring($V{columna}.indexOf("|") + 1)]]></textFieldExpression>
@@ -113,7 +113,7 @@
             <cellContents backcolor="#CFD4EE" mode="Opaque">
               <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
               <staticText>
-                <reportElement x="0" y="0" width="82" height="22"/>
+                <reportElement x="0" y="0" width="78" height="20"/>
                 <box leftPadding="2" rightPadding="2"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
                 <text><![CDATA[Total]]></text>
@@ -131,11 +131,11 @@
         </measure>
 
         <!-- Celda de datos -->
-        <crosstabCell width="82" height="22">
+        <crosstabCell width="78" height="20">
           <cellContents>
             <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
             <textField isBlankWhenNull="false">
-              <reportElement style="calor" x="0" y="0" width="82" height="22"/>
+              <reportElement style="calor" x="0" y="0" width="78" height="20"/>
               <box leftPadding="2" rightPadding="6"/>
               <textElement textAlignment="Right" verticalAlignment="Middle"/>
               <textFieldExpression><![CDATA[$V{hay} == 0 ? "—" : ($P{esDinero} ? String.format(new java.util.Locale("es", "GT"), "Q %,.2f", $V{valor}) : String.format(new java.util.Locale("es", "GT"), "%,d", Math.round($V{valor})))]]></textFieldExpression>
@@ -143,11 +143,11 @@
           </cellContents>
         </crosstabCell>
         <!-- Total de la fila (ultima columna) -->
-        <crosstabCell width="82" height="22" columnTotalGroup="columna">
+        <crosstabCell width="78" height="20" columnTotalGroup="columna">
           <cellContents backcolor="#E6E9F6" mode="Opaque">
             <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
             <textField>
-              <reportElement x="0" y="0" width="82" height="22"/>
+              <reportElement x="0" y="0" width="78" height="20"/>
               <box leftPadding="2" rightPadding="6"/>
               <textElement textAlignment="Right" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
               <textFieldExpression><![CDATA[$V{hay} == 0 ? "—" : ($P{esDinero} ? String.format(new java.util.Locale("es", "GT"), "Q %,.2f", $V{valor}) : String.format(new java.util.Locale("es", "GT"), "%,d", Math.round($V{valor})))]]></textFieldExpression>
@@ -155,11 +155,11 @@
           </cellContents>
         </crosstabCell>
         <!-- Total de la columna (ultima fila) -->
-        <crosstabCell width="82" height="22" rowTotalGroup="fila">
+        <crosstabCell width="78" height="20" rowTotalGroup="fila">
           <cellContents backcolor="#E6E9F6" mode="Opaque">
             <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
             <textField>
-              <reportElement x="0" y="0" width="82" height="22"/>
+              <reportElement x="0" y="0" width="78" height="20"/>
               <box leftPadding="2" rightPadding="6"/>
               <textElement textAlignment="Right" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
               <textFieldExpression><![CDATA[$V{hay} == 0 ? "—" : ($P{esDinero} ? String.format(new java.util.Locale("es", "GT"), "Q %,.2f", $V{valor}) : String.format(new java.util.Locale("es", "GT"), "%,d", Math.round($V{valor})))]]></textFieldExpression>
@@ -167,11 +167,11 @@
           </cellContents>
         </crosstabCell>
         <!-- Gran total -->
-        <crosstabCell width="82" height="22" rowTotalGroup="fila" columnTotalGroup="columna">
+        <crosstabCell width="78" height="20" rowTotalGroup="fila" columnTotalGroup="columna">
           <cellContents backcolor="#CFD4EE" mode="Opaque">
             <box><pen lineWidth="0.5" lineColor="#FFFFFF"/></box>
             <textField>
-              <reportElement x="0" y="0" width="82" height="22"/>
+              <reportElement x="0" y="0" width="78" height="20"/>
               <box leftPadding="2" rightPadding="6"/>
               <textElement textAlignment="Right" verticalAlignment="Middle"><font size="9" isBold="true"/></textElement>
               <textFieldExpression><![CDATA[$V{hay} == 0 ? "—" : ($P{esDinero} ? String.format(new java.util.Locale("es", "GT"), "Q %,.2f", $V{valor}) : String.format(new java.util.Locale("es", "GT"), "%,d", Math.round($V{valor})))]]></textFieldExpression>
@@ -181,7 +181,7 @@
         <whenNoDataCell>
           <cellContents>
             <staticText>
-              <reportElement x="0" y="0" width="200" height="22"/>
+              <reportElement x="0" y="0" width="200" height="20"/>
               <textElement><font size="9" isItalic="true"/></textElement>
               <text><![CDATA[Sin datos.]]></text>
             </staticText>
