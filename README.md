@@ -193,8 +193,11 @@ luego **Ejecutar de todas formas**. Ambos incluyen su propio Java.
 
 - **Tabla cruzada (pivote):** en Reportes se elige qué va en filas, qué en
   columnas y qué medir (boletos o ingresos) entre concierto, localidad, artista,
-  vendedor, día y método de pago. Se ve como mapa de calor con totales y el PDF la incluye en
-  su última página. Por defecto cruza concierto × localidad.
+  vendedor, día y método de pago. Se ve como mapa de calor con totales, justo debajo de los
+  filtros, y el PDF la incluye. Por defecto cruza concierto × localidad.
+
+- **Qué exportar al PDF:** el botón "Exportar PDF" pregunta qué secciones incluir (todas vienen
+  marcadas; se pueden quitar las que no hagan falta). La portada siempre va.
 
 - **Alerta de últimos boletos:** la columna "Disponibles" en Aforo y en el
   punto de venta resalta en naranja "¡Últimos N!" cuando quedan 10 boletos

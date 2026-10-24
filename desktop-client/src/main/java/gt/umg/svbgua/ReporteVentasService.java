@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import net.sf.jasperreports.engine.JREmptyDataSource;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperCompileManager;
@@ -47,22 +48,35 @@ public final class ReporteVentasService {
     private ReporteVentasService() {
     }
 
-    /** @param pivote tabla cruzada que se ve en pantalla; null si todavía no cargó (el PDF sale sin esa sección). */
-    public static void generar(Dashboard dashboard, Pivote pivote, String generadoPor, String filtrosAplicados,
-            File destino) throws JRException {
-        List<JasperPrint> secciones = new ArrayList<>(List.of(
-                llenarPortada(dashboard, generadoPor, filtrosAplicados),
-                llenarPorConcierto(dashboard),
-                llenarPorArtista(dashboard),
-                llenarPorVendedor(dashboard),
-                llenarPorDia(dashboard),
-                llenarPorLocalidad(dashboard)));
-        if (pivote != null) {
-            secciones.add(llenarTablaCruzada(pivote));
+    /**
+     * @param pivote tabla cruzada que se ve en pantalla; null si todavía no cargó (esa sección se omite)
+     * @param secciones las que se incluyen además de la portada, siempre presente; salen en el orden de
+     *                  {@link SeccionPdf}, sin importar el orden en que se pidieron
+     */
+    public static void generar(Dashboard dashboard, Pivote pivote, Set<SeccionPdf> secciones, String generadoPor,
+            String filtrosAplicados, File destino) throws JRException {
+        List<JasperPrint> paginas = new ArrayList<>();
+        paginas.add(llenarPortada(dashboard, generadoPor, filtrosAplicados));
+        for (SeccionPdf seccion : SeccionPdf.values()) {
+            if (!secciones.contains(seccion)) {
+                continue;
+            }
+            switch (seccion) {
+                case TABLA_CRUZADA -> {
+                    if (pivote != null) {
+                        paginas.add(llenarTablaCruzada(pivote));
+                    }
+                }
+                case CONCIERTO -> paginas.add(llenarPorConcierto(dashboard));
+                case ARTISTA -> paginas.add(llenarPorArtista(dashboard));
+                case VENDEDOR -> paginas.add(llenarPorVendedor(dashboard));
+                case DIA -> paginas.add(llenarPorDia(dashboard));
+                case LOCALIDAD -> paginas.add(llenarPorLocalidad(dashboard));
+            }
         }
 
         JRPdfExporter exportador = new JRPdfExporter();
-        exportador.setExporterInput(SimpleExporterInput.getInstance(secciones));
+        exportador.setExporterInput(SimpleExporterInput.getInstance(paginas));
         exportador.setExporterOutput(new SimpleOutputStreamExporterOutput(destino));
         exportador.exportReport();
     }

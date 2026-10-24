@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -283,7 +284,11 @@ public final class ReportesPane extends BorderPane {
         if (ultimoDashboard == null) {
             return;
         }
+        Window ventana = getScene() == null ? null : getScene().getWindow();
+        ExportarPdfDialog.mostrar(ventana, ultimoPivote, this::guardarPdf);
+    }
 
+    private void guardarPdf(Set<SeccionPdf> secciones) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Guardar reporte de ventas");
         chooser.setInitialFileName("reporte-ventas-" + LocalDate.now() + ".pdf");
@@ -302,7 +307,7 @@ public final class ReportesPane extends BorderPane {
         Async.run(
                 () -> {
                     try {
-                        ReporteVentasService.generar(dashboard, pivote, nombreCompleto, descripcion, destino);
+                        ReporteVentasService.generar(dashboard, pivote, secciones, nombreCompleto, descripcion, destino);
                         return destino;
                     } catch (JRException error) {
                         throw new RuntimeException(error.getMessage(), error);
@@ -340,10 +345,10 @@ public final class ReportesPane extends BorderPane {
                 seccion("Ventas por artista", barChartArtista(dashboard.porArtista(), ANCHO_BARRA_ANCHA)));
 
         contenido.getChildren().setAll(
+                tablaCruzada,
                 barras,
                 seccion("Ventas por día", lineChartPorDia(dashboard.porDia())),
                 seccion("Boletos por localidad", pieChartLocalidad(dashboard.porLocalidad())),
-                tablaCruzada,
                 seccion("Ocupación por concierto (inventario actual: no depende de fechas ni vendedor)", ocupacionPane(dashboard.ocupacion())));
         Animaciones.entradaEnCascada(contenido.getChildren());
     }

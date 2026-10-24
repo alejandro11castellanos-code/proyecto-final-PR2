@@ -382,13 +382,17 @@ Verificado contra Neon: las 40 combinaciones (5 × 4 dimensiones × 2
 medidas) suman exactamente `resumen` (boletos e ingresos).
 
 El cliente la muestra como mapa de calor con totales (`TablaCruzadaPane`) y
-el PDF la incluye como última página apaisada con un `crosstab` nativo de
+el PDF la incluye como página apaisada, justo después de la portada, con un `crosstab` nativo de
 JasperReports (`tabla_cruzada.jrxml`). Para agregar otra dimensión basta una
 entrada en `DIMENSIONES` del repositorio y en la ruta.
 
 ### Exportación a PDF (JasperReports)
 
-El botón "Exportar PDF" del dashboard (`ReportesPane`) arma el mismo
+El botón "Exportar PDF" abre primero un diálogo (`ExportarPdfDialog`) para elegir qué
+incluir: tabla cruzada, concierto, artista, vendedores, día y localidad. Todo viene marcado y
+se puede quitar lo que no hace falta (no deja exportar sin ninguna). La portada con los
+KPIs y los filtros va siempre. Las páginas salen en el orden de `SeccionPdf`, con la tabla
+cruzada primero, igual que en pantalla. Después arma el mismo
 `Dashboard` que ya se graficó y se lo pasa a `ReporteVentasService`, que
 compila y llena las plantillas JRXML (portada con KPIs y, por cada corte,
 una gráfica JasperReports/JFreeChart más su tabla: concierto, artista y
