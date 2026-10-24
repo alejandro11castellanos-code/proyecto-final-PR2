@@ -9,9 +9,11 @@ export class InventarioNoEncontradoError extends Error {
 }
 
 export class DisponibilidadInsuficienteError extends Error {
-  constructor(idInventario, disponible, solicitado) {
+  // `descripcion` ("Concierto — Localidad") es opcional: con un carrito que mezcla conciertos,
+  // "el inventario 9" no le dice nada al vendedor.
+  constructor(idInventario, disponible, solicitado, descripcion) {
     super(
-      `Disponibilidad insuficiente para el inventario ${idInventario}: `
+      `Disponibilidad insuficiente para ${descripcion ?? `el inventario ${idInventario}`}: `
         + `pidieron ${solicitado} y hay ${disponible}.`,
     );
     this.name = 'DisponibilidadInsuficienteError';
@@ -55,8 +57,20 @@ export function createVentaRepository(pool) {
             throw new InventarioNoEncontradoError(item.idInventario);
           }
           if (item.cantidad > fila.cantidad_disponible) {
+            const { rows: [nombres] } = await client.query(
+              `SELECT c.titulo_evento, l.nombre
+               FROM inventario_boletos i
+               JOIN conciertos c ON c.id_concierto = i.id_concierto
+               JOIN localidades l ON l.id_localidad = i.id_localidad
+               WHERE i.id_inventario = $1`,
+              [item.idInventario],
+            );
             throw new DisponibilidadInsuficienteError(
-              item.idInventario, fila.cantidad_disponible, item.cantidad);
+              item.idInventario,
+              fila.cantidad_disponible,
+              item.cantidad,
+              nombres && `${nombres.titulo_evento} — ${nombres.nombre}`,
+            );
           }
         }
 

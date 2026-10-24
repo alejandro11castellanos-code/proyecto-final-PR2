@@ -322,3 +322,62 @@ test('POST /ventas/:id/enviar responde 502 si el correo no se pudo enviar', asyn
 
   assert.equal(response.status, 502);
 });
+
+// --- Una compra puede mezclar boletos de varios conciertos ---
+
+test('POST /ventas acepta renglones de inventarios (conciertos) distintos en una sola venta', async () => {
+  let itemsRecibidos;
+  const app = buildApp({
+    crear: async ({ items }) => {
+      itemsRecibidos = items;
+      return ventaCreada;
+    },
+  });
+
+  const response = await request(app)
+    .post('/ventas')
+    .set('Authorization', `Bearer ${vendedorToken}`)
+    .send({ items: [{ id_inventario: 6, cantidad: 2 }, { id_inventario: 9, cantidad: 1 }] });
+
+  assert.equal(response.status, 201);
+  assert.deepEqual(itemsRecibidos, [
+    { idInventario: 6, cantidad: 2 },
+    { idInventario: 9, cantidad: 1 },
+  ]);
+});
+
+test('GET /ventas/:id/boletos conserva el concierto de cada boleto cuando la venta mezcla conciertos', async () => {
+  const [primerRenglon] = ventaConDetalle.items;
+  const mixta = {
+    ...ventaConDetalle,
+    items: [
+      { ...primerRenglon, id_detalle: 10, titulo_evento: 'RHCP', boletos: [primerRenglon.boletos[0]] },
+      {
+        ...primerRenglon,
+        id_detalle: 11,
+        id_inventario: 9,
+        id_concierto: 4,
+        titulo_evento: 'Concierto de prueba',
+        boletos: [{ id_boleto: 3, numero: 1, codigo: 'SVBGUA-V1-D11-B1-QRST2345', fecha_ingreso: null }],
+      },
+    ],
+  };
+  const app = buildApp({ findById: async () => mixta });
+
+  const response = await request(app).get('/ventas/1/boletos').set('Authorization', `Bearer ${vendedorToken}`);
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(response.body.boletos.map((boleto) => boleto.titulo_evento), ['RHCP', 'Concierto de prueba']);
+});
+
+test('DisponibilidadInsuficienteError nombra el concierto y la localidad cuando se conocen', () => {
+  const error = new DisponibilidadInsuficienteError(6, 5, 9, 'RHCP — General Norte');
+  assert.match(error.message, /RHCP — General Norte/);
+  assert.match(error.message, /pidieron 9 y hay 5/);
+  assert.equal(error.idInventario, 6);
+});
+
+test('DisponibilidadInsuficienteError sin nombres conserva el mensaje con el id de inventario', () => {
+  const error = new DisponibilidadInsuficienteError(6, 5, 9);
+  assert.match(error.message, /inventario 6/);
+});
