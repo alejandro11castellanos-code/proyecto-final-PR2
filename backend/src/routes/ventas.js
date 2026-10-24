@@ -47,6 +47,18 @@ function validarItems(rawItems) {
   return { items };
 }
 
+const METODOS_PAGO = ['efectivo', 'tarjeta'];
+
+// Un cliente que no manda metodo_pago es uno anterior al pago en efectivo, cuyo único cobro era el
+// simulador de tarjeta: por eso la ausencia se registra como 'tarjeta' y no como un error.
+function validarMetodoPago(raw) {
+  if (raw === undefined) return { metodoPago: 'tarjeta' };
+  if (typeof raw !== 'string' || !METODOS_PAGO.includes(raw)) {
+    return { error: `metodo_pago debe ser uno de: ${METODOS_PAGO.join(', ')}.` };
+  }
+  return { metodoPago: raw };
+}
+
 export function createVentaRouter({ ventaRepository, qrProvider, mailer, jwtSecret }) {
   const router = express.Router();
   // El rol de control de acceso solo valida ingresos: no vende ni consulta ventas.
@@ -55,9 +67,11 @@ export function createVentaRouter({ ventaRepository, qrProvider, mailer, jwtSecr
   router.post('/', requireAuth, async (req, res, next) => {
     const { error, items } = validarItems(req.body?.items);
     if (error) return res.status(400).json({ error });
+    const { error: errorPago, metodoPago } = validarMetodoPago(req.body?.metodo_pago);
+    if (errorPago) return res.status(400).json({ error: errorPago });
 
     try {
-      const venta = await ventaRepository.crear({ idVendedor: req.user.id_usuario, items });
+      const venta = await ventaRepository.crear({ idVendedor: req.user.id_usuario, items, metodoPago });
       res.status(201).json(venta);
     } catch (thrown) {
       if (thrown instanceof InventarioNoEncontradoError) {

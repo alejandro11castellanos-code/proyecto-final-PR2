@@ -31,7 +31,7 @@ export class DisponibilidadInsuficienteError extends Error {
  */
 export function createVentaRepository(pool) {
   return {
-    async crear({ idVendedor, items }) {
+    async crear({ idVendedor, items, metodoPago = 'tarjeta' }) {
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
@@ -95,10 +95,10 @@ export function createVentaRepository(pool) {
         }
 
         const ventaResult = await client.query(
-          `INSERT INTO ventas (id_vendedor, total_venta)
-           VALUES ($1, $2)
-           RETURNING id_venta, id_vendedor, fecha_venta, total_venta`,
-          [idVendedor, total],
+          `INSERT INTO ventas (id_vendedor, total_venta, metodo_pago)
+           VALUES ($1, $2, $3)
+           RETURNING id_venta, id_vendedor, fecha_venta, total_venta, metodo_pago`,
+          [idVendedor, total, metodoPago],
         );
         const venta = ventaResult.rows[0];
 
@@ -133,7 +133,7 @@ export function createVentaRepository(pool) {
 
     async findById(idVenta) {
       const ventaResult = await pool.query(
-        'SELECT id_venta, id_vendedor, fecha_venta, total_venta FROM ventas WHERE id_venta = $1',
+        'SELECT id_venta, id_vendedor, fecha_venta, total_venta, metodo_pago FROM ventas WHERE id_venta = $1',
         [idVenta],
       );
       const venta = ventaResult.rows[0];
@@ -177,7 +177,7 @@ export function createVentaRepository(pool) {
     async listar({ idVendedor = null, idConcierto = null } = {}) {
       const result = await pool.query(
         `SELECT v.id_venta, v.fecha_venta, v.id_vendedor, u.nombre_completo AS nombre_vendedor,
-                v.total_venta, COALESCE(SUM(d.cantidad), 0) AS boletos
+                v.total_venta, v.metodo_pago, COALESCE(SUM(d.cantidad), 0) AS boletos
          FROM ventas v
          JOIN usuarios u ON u.id_usuario = v.id_vendedor
          LEFT JOIN detalle_ventas d ON d.id_venta = v.id_venta
@@ -188,7 +188,7 @@ export function createVentaRepository(pool) {
                  JOIN inventario_boletos i2 ON i2.id_inventario = d2.id_inventario
                  WHERE d2.id_venta = v.id_venta AND i2.id_concierto = $2
                ))
-         GROUP BY v.id_venta, v.fecha_venta, v.id_vendedor, u.nombre_completo, v.total_venta
+         GROUP BY v.id_venta, v.fecha_venta, v.id_vendedor, u.nombre_completo, v.total_venta, v.metodo_pago
          ORDER BY v.fecha_venta DESC
          LIMIT 200`,
         [idVendedor, idConcierto],

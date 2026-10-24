@@ -38,7 +38,7 @@ function cteHechos(filtros, { p }) {
   if (filtros.idArtista) condiciones.push(`c.id_artista = ${p(filtros.idArtista)}`);
 
   return `hechos AS (
-    SELECT dv.subtotal, dv.cantidad, v.id_venta, v.id_vendedor, v.fecha_venta,
+    SELECT dv.subtotal, dv.cantidad, v.id_venta, v.id_vendedor, v.fecha_venta, v.metodo_pago,
            i.id_localidad, i.id_concierto, c.id_artista
     FROM detalle_ventas dv
     JOIN ventas v ON v.id_venta = dv.id_venta
@@ -61,6 +61,7 @@ const DIMENSIONES = {
   artista: { id: 'a.id_artista', etiqueta: 'a.nombre_artistico' },
   vendedor: { id: 'u.id_usuario', etiqueta: 'u.nombre_completo' },
   dia: { id: "TO_CHAR(h.fecha_venta, 'YYYY-MM-DD')", etiqueta: "TO_CHAR(h.fecha_venta, 'YYYY-MM-DD')" },
+  metodo: { id: 'h.metodo_pago', etiqueta: 'INITCAP(h.metodo_pago)' },
 };
 const MEDIDAS = {
   boletos: 'SUM(h.cantidad)::int',

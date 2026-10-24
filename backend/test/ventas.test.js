@@ -381,3 +381,54 @@ test('DisponibilidadInsuficienteError sin nombres conserva el mensaje con el id 
   const error = new DisponibilidadInsuficienteError(6, 5, 9);
   assert.match(error.message, /inventario 6/);
 });
+
+// --- Método de pago (efectivo / tarjeta) ---
+
+const unItem = { items: [{ id_inventario: 1, cantidad: 2 }] };
+
+async function postVenta(body, crear) {
+  const app = buildApp({ crear });
+  return request(app).post('/ventas').set('Authorization', `Bearer ${vendedorToken}`).send(body);
+}
+
+test('POST /ventas sin metodo_pago asume tarjeta (clientes anteriores solo tenían el simulador de tarjeta)', async () => {
+  let recibido;
+  const response = await postVenta(unItem, async (datos) => {
+    recibido = datos;
+    return ventaCreada;
+  });
+
+  assert.equal(response.status, 201);
+  assert.equal(recibido.metodoPago, 'tarjeta');
+});
+
+test('POST /ventas guarda el método de pago pedido (efectivo)', async () => {
+  let recibido;
+  const response = await postVenta({ ...unItem, metodo_pago: 'efectivo' }, async (datos) => {
+    recibido = datos;
+    return { ...ventaCreada, metodo_pago: 'efectivo' };
+  });
+
+  assert.equal(response.status, 201);
+  assert.equal(recibido.metodoPago, 'efectivo');
+  assert.equal(response.body.metodo_pago, 'efectivo');
+});
+
+for (const [descripcion, valor] of [
+  ['un método desconocido', 'cheque'],
+  ['un método vacío', ''],
+  ['un método que no es texto', 7],
+  ['una variante en mayúsculas', 'Efectivo'],
+]) {
+  test(`POST /ventas responde 400 ante ${descripcion}`, async () => {
+    let llamadas = 0;
+    const response = await postVenta({ ...unItem, metodo_pago: valor }, async () => {
+      llamadas += 1;
+      return ventaCreada;
+    });
+
+    assert.equal(response.status, 400);
+    assert.match(response.body.error, /metodo_pago/);
+    assert.equal(llamadas, 0, 'no debe tocar la base con un método inválido');
+  });
+}

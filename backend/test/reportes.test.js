@@ -233,3 +233,13 @@ test('GET /reportes/cruzado propaga un fallo del repositorio como 500', async ()
     .set('Authorization', `Bearer ${adminToken}`);
   assert.equal(response.status, 500);
 });
+
+test('GET /reportes/cruzado acepta el método de pago como dimensión', async () => {
+  const { repo, llamadas } = fakeRepositoryCruzado();
+  const response = await request(createApp({ reporteRepository: repo, jwtSecret }))
+    .get('/reportes/cruzado?filas=concierto&columnas=metodo&medida=ingresos')
+    .set('Authorization', `Bearer ${adminToken}`);
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(llamadas[0].ejes, { filas: 'concierto', columnas: 'metodo', medida: 'ingresos' });
+});

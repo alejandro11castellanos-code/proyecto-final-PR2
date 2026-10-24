@@ -39,7 +39,7 @@ function leerFiltros(query) {
 
 // Dimensiones y medidas que admite la tabla cruzada. El repositorio las
 // traduce a SQL con una lista cerrada: el texto del usuario nunca llega al SQL.
-const DIMENSIONES = ['concierto', 'localidad', 'artista', 'vendedor', 'dia'];
+const DIMENSIONES = ['concierto', 'localidad', 'artista', 'vendedor', 'dia', 'metodo'];
 const MEDIDAS = ['boletos', 'ingresos'];
 
 // Devuelve { ejes } o { error }. Los parámetros ausentes toman el pivote
