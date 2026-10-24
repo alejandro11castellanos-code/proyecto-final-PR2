@@ -21,3 +21,8 @@ services:
       # Render genera un secreto aleatorio para firmar los tokens.
       - key: JWT_SECRET
         generateValue: true
+      # Correo de boletos (opcional). Se cargan a mano en Render > Environment; sin ellos el envio responde 502.
+      - key: BREVO_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false

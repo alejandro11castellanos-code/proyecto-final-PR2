@@ -279,9 +279,11 @@ de escritorio o incrustar en un `<img>`).
 ```
 
 `POST /ventas/:id/enviar` recibe `{ "email": "..." }`, valida el formato y
-manda un correo HTML con el QR de cada ítem incrustado (`cid`) más el PNG
-adjunto. Requiere `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS`/`SMTP_FROM`
-en el entorno; sin `SMTP_HOST` configurado responde `502` con un mensaje
+manda un correo HTML con un QR por boleto. Con `BREVO_API_KEY` + `MAIL_FROM`
+(remitente verificado en Brevo) sale por la API HTTPS de Brevo y los QR van como
+PNG adjuntos; sin ella, por SMTP (`SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS`)
+con el QR incrustado (`cid`) más el PNG adjunto. Sin ninguno de los dos
+configurados responde `502` con un mensaje
 claro en vez de fallar oscuro dentro de nodemailer. Verificado enviando un
 correo real a una casilla de prueba (Ethereal): asunto, remitente y los QR
 incrustados llegan correctos y son escaneables.
