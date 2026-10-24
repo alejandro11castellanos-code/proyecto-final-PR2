@@ -96,16 +96,32 @@ Java, Maven ni el código.
 
 ```bash
 cd desktop-client
-./packaging/crear-instalador-mac.sh        # genera target/instalador/SVB-GUA-1.0.0.dmg (~80 MB)
+./packaging/crear-instalador-mac.sh        # genera target/instalador/SVB-GUA-1.0.0.dmg (~80 MB, para este procesador)
 ./packaging/crear-instalador-mac.sh app-image   # solo la app suelta, para probarla sin instalar
 ```
 
 Requiere macOS, JDK 21 (trae `jpackage`) y Maven. `jpackage` solo crea el instalador del sistema
-en el que corre: el de Windows (`.exe`/`.msi`) hay que generarlo desde una máquina Windows.
+y del procesador en el que corre: el de Windows (`.exe`/`.msi`) y el de Mac Intel se generan en
+una máquina de GitHub (ver más abajo).
+
+**Cuál `.dmg` elegir:** depende del procesador de la Mac (menú  → *Acerca de esta Mac*).
+
+| Mac | Instalador | Cómo se genera |
+|-----|------------|----------------|
+| Apple Silicon (M1, M2, M3, M4) | `SVB-GUA-1.0.0-mac-apple-silicon.dmg` | `./packaging/crear-instalador-mac.sh` en una Mac con Apple Silicon |
+| Intel (Macs anteriores a 2020 o con "Intel" en *Acerca de*) | `SVB-GUA-1.0.0-mac-intel.dmg` | Actions -> *Instalador de macOS (Intel)* -> **Run workflow**; el artefacto es **SVB-GUA-Mac-Intel** |
+
+Un `.dmg` para el procesador equivocado no abre: macOS responde que la app no es compatible.
 
 **Instalar:** abrir el `.dmg` y arrastrar *SVB-GUA* a *Aplicaciones*. Como el instalador no está
-firmado con un certificado de Apple, la primera vez macOS lo bloquea: clic derecho sobre la app,
-**Abrir** y confirmar (o `xattr -cr /Applications/SVB-GUA.app` en la terminal).
+firmado ni notarizado por Apple, la primera vez macOS lo bloquea ("Apple no puede revisar si
+contiene software malicioso"). Se desbloquea una sola vez, de cualquiera de estas formas:
+
+1. Tocar **OK** en el aviso y abrir *Ajustes del Sistema -> Privacidad y seguridad*; abajo, en
+   *Seguridad*, aparece **Abrir de todos modos**. Confirmar con la contraseña de la Mac.
+2. O, en la terminal: `xattr -cr /Applications/SVB-GUA.app` y abrir la app con doble clic.
+
+(En macOS recientes ya no sirve el clic derecho -> *Abrir*.)
 
 ### Windows
 
