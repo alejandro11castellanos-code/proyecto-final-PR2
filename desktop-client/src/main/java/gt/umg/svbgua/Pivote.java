@@ -23,8 +23,10 @@ final class Pivote {
             "localidad", "Localidad",
             "artista", "Artista",
             "vendedor", "Vendedor",
-            "dia", "Día");
-    static final List<String> ORDEN_DIMENSIONES = List.of("concierto", "localidad", "artista", "vendedor", "dia");
+            "dia", "Día",
+            "metodo", "Método de pago");
+    static final List<String> ORDEN_DIMENSIONES =
+            List.of("concierto", "localidad", "artista", "vendedor", "dia", "metodo");
 
     static final Map<String, String> MEDIDAS = Map.of("boletos", "Boletos", "ingresos", "Ingresos (Q)");
     static final List<String> ORDEN_MEDIDAS = List.of("boletos", "ingresos");

@@ -144,8 +144,9 @@ public final class CatalogClient {
 
     // ---- Ventas ----
 
-    public Venta crearVenta(String token, List<ItemVenta> items) {
-        return send("POST", "/ventas", token, new VentaRequest(items), Venta.class);
+    /** @param metodoPago {@code "efectivo"} o {@code "tarjeta"} */
+    public Venta crearVenta(String token, List<ItemVenta> items, String metodoPago) {
+        return send("POST", "/ventas", token, new VentaRequest(items, metodoPago), Venta.class);
     }
 
     /**
@@ -309,11 +310,11 @@ public final class CatalogClient {
     public record ItemVenta(int idInventario, int cantidad) {
     }
 
-    public record Venta(int idVenta, int idVendedor, String fechaVenta, String totalVenta) {
+    public record Venta(int idVenta, int idVendedor, String fechaVenta, String totalVenta, String metodoPago) {
     }
 
     public record VentaResumen(int idVenta, String fechaVenta, int idVendedor, String nombreVendedor,
-            String totalVenta, int boletos) {
+            String totalVenta, String metodoPago, int boletos) {
     }
 
     /** Un boleto es UNA persona: {@code numero} de {@code cantidad} dentro de su renglón de venta. */
@@ -358,7 +359,7 @@ public final class CatalogClient {
     private record InventarioUpdateRequest(double precio, int cantidadTotal) {
     }
 
-    private record VentaRequest(List<ItemVenta> items) {
+    private record VentaRequest(List<ItemVenta> items, String metodoPago) {
     }
 
     public record Usuario(int idUsuario, String nombreUsuario, String nombreCompleto, String rol,

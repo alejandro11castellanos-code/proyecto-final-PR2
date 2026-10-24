@@ -109,10 +109,14 @@ public final class HistorialPane extends BorderPane {
         TableColumn<VentaResumen, String> total = new TableColumn<>("Total");
         total.setCellValueFactory(data -> new SimpleStringProperty(formatearMoneda(data.getValue().totalVenta())));
 
+        TableColumn<VentaResumen, String> pago = new TableColumn<>("Pago");
+        pago.setCellValueFactory(data -> new SimpleStringProperty(
+                "efectivo".equals(data.getValue().metodoPago()) ? "Efectivo" : "Tarjeta"));
+
         TableColumn<VentaResumen, String> boletos = new TableColumn<>("Boletos");
         boletos.setCellValueFactory(data -> new SimpleStringProperty(String.valueOf(data.getValue().boletos())));
 
-        table.getColumns().addAll(List.of(fecha, id, vendedor, total, boletos));
+        table.getColumns().addAll(List.of(fecha, id, vendedor, total, pago, boletos));
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         table.getSelectionModel().selectedItemProperty().addListener((obs, previo, actual) -> {
             seleccionada = actual;

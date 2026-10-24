@@ -186,9 +186,14 @@ luego **Ejecutar de todas formas**. Ambos incluyen su propio Java.
   foto del inventario, así que solo responde a artista, concierto y
   localidad.
 
+- **Compra de varios conciertos y pago en efectivo:** el carrito del punto de venta
+  conserva los boletos al cambiar de concierto, así que una misma compra puede mezclarlos.
+  Se cobra con tarjeta (simulada) o en efectivo (se escribe el monto recibido y la app
+  calcula el cambio); el método queda guardado en la venta y se ve en "Mis ventas".
+
 - **Tabla cruzada (pivote):** en Reportes se elige qué va en filas, qué en
   columnas y qué medir (boletos o ingresos) entre concierto, localidad, artista,
-  vendedor y día. Se ve como mapa de calor con totales y el PDF la incluye en
+  vendedor, día y método de pago. Se ve como mapa de calor con totales y el PDF la incluye en
   su última página. Por defecto cruza concierto × localidad.
 
 - **Alerta de últimos boletos:** la columna "Disponibles" en Aforo y en el

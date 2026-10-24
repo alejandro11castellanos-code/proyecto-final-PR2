@@ -203,13 +203,22 @@ ordenadas por fecha descendente. Cada fila trae `id_venta`, `fecha_venta`,
   "items": [
     { "id_inventario": 1, "cantidad": 2 },
     { "id_inventario": 3, "cantidad": 4 }
-  ]
+  ],
+  "metodo_pago": "efectivo"
 }
 ```
 
 `id_vendedor` sale del token, no del cuerpo. Cada `id_inventario` debe
 aparecer una sola vez (cantidades repetidas se rechazan con `400`, para que
-el cliente las agrupe). La transacción, en orden:
+el cliente las agrupe). Los renglones pueden ser de **conciertos distintos**: una
+misma compra puede mezclarlos, y cada boleto conserva el suyo.
+
+`metodo_pago` es `"efectivo"` o `"tarjeta"` y es opcional: si falta se registra
+`"tarjeta"` (los clientes anteriores solo tenían el simulador de tarjeta); un valor
+distinto responde `400`. Se guarda en `ventas.metodo_pago` y viaja en `POST /ventas`,
+`GET /ventas`, `GET /ventas/:id` y como dimensión `metodo` de la tabla cruzada. El
+cobro en efectivo (monto recibido y cambio) se calcula en el cliente: no se guarda.
+La transacción, en orden:
 
 1. Bloquea todas las filas de `inventario_boletos` involucradas
    (`SELECT ... FOR UPDATE`, en orden de `id_inventario` para evitar
@@ -352,7 +361,7 @@ y mide una cantidad; acepta los mismos filtros que el dashboard.
 
 | Parámetro | Valores | Por defecto |
 |-----------|---------|-------------|
-| `filas`, `columnas` | `concierto`, `localidad`, `artista`, `vendedor`, `dia` (distintas entre sí) | `concierto` × `localidad` |
+| `filas`, `columnas` | `concierto`, `localidad`, `artista`, `vendedor`, `dia`, `metodo` (distintas entre sí) | `concierto` × `localidad` |
 | `medida` | `boletos` (entero), `ingresos` (decimal como texto, igual que el resto) | `boletos` |
 
 ```json
@@ -471,7 +480,9 @@ exigen administrador o vendedor.
 
 **Migración.** Una base creada con la versión anterior se actualiza con
 `database/migrations/001_boletos_y_control_de_acceso.sql` (rol, tabla `boletos` y boletos de
-las ventas existentes; se puede ejecutar más de una vez). Una base nueva solo necesita
+las ventas existentes) y `database/migrations/002_metodo_pago.sql` (columna
+`ventas.metodo_pago`, con las ventas existentes como `tarjeta`); ambas se pueden ejecutar
+más de una vez. Una base nueva solo necesita
 `schema.sql`. El seed agrega el usuario `puerta1` (rol `acceso`).
 
 

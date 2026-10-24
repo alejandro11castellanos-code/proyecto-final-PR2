@@ -3,6 +3,7 @@ package gt.umg.svbgua;
 import gt.umg.svbgua.CatalogClient.Concierto;
 import gt.umg.svbgua.CatalogClient.Inventario;
 import gt.umg.svbgua.CatalogClient.ItemVenta;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -17,6 +18,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -44,6 +47,8 @@ public final class VentaPane extends BorderPane {
     private final Label totalLabel = new Label("Total: Q 0.00");
     private final Button confirmarButton = new Button("Confirmar venta");
     private final Button vaciarButton = new Button("Vaciar carrito");
+    private final ToggleButton tarjetaToggle = new ToggleButton("Tarjeta");
+    private final ToggleButton efectivoToggle = new ToggleButton("Efectivo");
     private final Label status = new Label();
     private final PreviewPanel previewPanel = new PreviewPanel();
     private final FondoDifuminado fondo = new FondoDifuminado();
@@ -186,7 +191,22 @@ public final class VentaPane extends BorderPane {
                 confirmarButton);
         botones.setAlignment(Pos.CENTER_LEFT);
 
-        VBox box = new VBox(8, new Label("Carrito"), carritoTable, totalLabel, botones);
+        ToggleGroup metodoPago = new ToggleGroup();
+        tarjetaToggle.setToggleGroup(metodoPago);
+        efectivoToggle.setToggleGroup(metodoPago);
+        tarjetaToggle.getStyleClass().add("segmento");
+        efectivoToggle.getStyleClass().add("segmento");
+        tarjetaToggle.setSelected(true);
+        // Un ToggleGroup permite deseleccionar haciendo clic en el activo; siempre debe quedar un método elegido.
+        metodoPago.selectedToggleProperty().addListener((obs, anterior, actual) -> {
+            if (actual == null) {
+                anterior.setSelected(true);
+            }
+        });
+        HBox pago = new HBox(8, new Label("Pago:"), tarjetaToggle, efectivoToggle);
+        pago.setAlignment(Pos.CENTER_LEFT);
+
+        VBox box = new VBox(8, new Label("Carrito"), carritoTable, totalLabel, pago, botones);
         return box;
     }
 
@@ -282,10 +302,15 @@ public final class VentaPane extends BorderPane {
             return;
         }
         double total = carrito.stream().mapToDouble(ItemCarrito::subtotal).sum();
-        PagoDialog.mostrar(getScene().getWindow(), total, this::registrarVenta);
+        if (efectivoToggle.isSelected()) {
+            EfectivoDialog.mostrar(getScene().getWindow(), total, cambio -> registrarVenta("efectivo", cambio));
+        } else {
+            PagoDialog.mostrar(getScene().getWindow(), total, () -> registrarVenta("tarjeta", null));
+        }
     }
 
-    private void registrarVenta() {
+    /** @param cambio a devolver al cliente si se pagó en efectivo; null con tarjeta */
+    private void registrarVenta(String metodoPago, BigDecimal cambio) {
         List<ItemVenta> items = new ArrayList<>();
         for (ItemCarrito item : carrito) {
             items.add(new ItemVenta(item.idInventario(), item.cantidad()));
@@ -294,10 +319,11 @@ public final class VentaPane extends BorderPane {
 
         confirmarButton.setDisable(true);
         Async.run(
-                () -> client.crearVenta(token, items),
+                () -> client.crearVenta(token, items, metodoPago),
                 venta -> {
                     String confirmacion = "Venta #" + venta.idVenta() + " registrada. Total: "
-                            + formatearMoneda(venta.totalVenta()) + ".";
+                            + formatearMoneda(venta.totalVenta()) + "."
+                            + (cambio == null ? "" : " Cambio: " + formatearMoneda(cambio.doubleValue()) + ".");
                     vaciarCarrito();
                     status.setText(confirmacion);
                     if (conciertoActual != null) {

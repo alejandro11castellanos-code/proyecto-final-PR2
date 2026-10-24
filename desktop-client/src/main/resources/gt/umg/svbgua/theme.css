@@ -105,6 +105,32 @@
     -fx-background-color: #e5e1ff;
 }
 
+/* Selector de opciones excluyentes (p. ej. método de pago): la activa se ve como un botón principal. */
+.toggle-button.segmento {
+    -fx-background-color: white;
+    -fx-text-fill: #5646d6;
+    -fx-font-weight: bold;
+    -fx-background-radius: 9;
+    -fx-border-color: #cfc9fa;
+    -fx-border-radius: 9;
+    -fx-padding: 6 16;
+    -fx-cursor: hand;
+}
+
+.toggle-button.segmento:hover {
+    -fx-background-color: #f1efff;
+}
+
+.toggle-button.segmento:selected {
+    -fx-background-color: linear-gradient(to bottom right, #7a6bf0, #6c5ce7);
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+}
+
+.toggle-button.segmento:focused {
+    -fx-background-insets: 0;
+}
+
 /* ---------- Campos de texto, combos, fechas ---------- */
 
 .text-field,
