@@ -29,9 +29,19 @@ SVB_API_URL=https://<nombre>.onrender.com ./packaging/crear-instalador-mac.sh
 
 ## Correo (opcional)
 
-Enviar boletos por correo necesita SMTP. En Render: *Environment* -> agregar `SMTP_HOST`,
-`SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` y `SMTP_FROM`. Sin ellos, el envío responde 502 con un
-mensaje claro y todo lo demás funciona.
+El plan gratuito de Render **bloquea los puertos SMTP**, así que el correo sale por la API HTTPS de
+[Brevo](https://www.brevo.com) (gratis, ~300 correos al día):
+
+1. En Brevo: *Senders, domains & dedicated IPs* -> *Senders* -> agregar un remitente (un correo
+   propio) y confirmarlo con el enlace que llega a esa casilla. Sin remitente verificado Brevo rechaza el envío.
+2. En Brevo: *SMTP & API* -> *API Keys* -> crear una clave y copiarla (solo se ve una vez).
+3. En Render: *Environment* -> agregar `BREVO_API_KEY` (la clave) y `MAIL_FROM` con el remitente
+   verificado, por ejemplo `SVB-GUA <mi.correo@gmail.com>`. Render reinicia el servicio.
+
+La clave es un secreto: va solo en *Environment* (y en `backend/.env` para probar local), nunca en el
+repositorio. Los QR viajan como archivos PNG adjuntos (la API de Brevo no admite imágenes
+incrustadas). Sin `BREVO_API_KEY` el servidor intenta SMTP si hay `SMTP_HOST`; sin ninguno de los
+dos, el envío responde 502 con un mensaje claro y todo lo demás funciona.
 
 ## Qué esperar del plan gratuito
 
