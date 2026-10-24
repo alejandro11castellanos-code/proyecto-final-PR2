@@ -25,8 +25,8 @@ import javafx.util.StringConverter;
 
 /**
  * Punto de venta: elegir concierto, ver disponibilidad en tiempo real por
- * localidad, armar un carrito con varios ítems y confirmar la venta en una
- * sola transacción contra la API.
+ * localidad, armar un carrito con varios ítems (de uno o de varios conciertos) y
+ * confirmar la venta en una sola transacción contra la API.
  */
 public final class VentaPane extends BorderPane {
 
@@ -96,8 +96,9 @@ public final class VentaPane extends BorderPane {
                 return conciertoCombo.getValue();
             }
         });
+        // Cambiar de concierto NO vacía el carrito: una misma compra puede mezclar boletos de varios.
         conciertoCombo.valueProperty().addListener((obs, previous, current) -> {
-            vaciarCarrito();
+            status.setText("");
             if (current != null) {
                 cargarDisponibilidad(current.idConcierto());
                 previewPanel.cargarParaArtista(current.nombreArtistico());
@@ -110,7 +111,9 @@ public final class VentaPane extends BorderPane {
         // después de armar esta pantalla.
         conciertoCombo.setOnShowing(event -> cargarConciertos());
 
-        VBox box = new VBox(8, new Label("Concierto"), conciertoCombo);
+        Label ayuda = new Label("Podés sumar boletos de varios conciertos en la misma compra: el carrito se conserva al cambiar.");
+        ayuda.getStyleClass().add("muted");
+        VBox box = new VBox(8, new Label("Concierto"), conciertoCombo, ayuda);
         box.setPadding(new Insets(0, 0, 12, 0));
         return box;
     }
@@ -152,6 +155,9 @@ public final class VentaPane extends BorderPane {
     }
 
     private VBox buildCarritoPane() {
+        TableColumn<ItemCarrito, String> concierto = new TableColumn<>("Concierto");
+        concierto.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().tituloEvento()));
+
         TableColumn<ItemCarrito, String> localidad = new TableColumn<>("Localidad");
         localidad.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().nombreLocalidad()));
 
@@ -161,7 +167,7 @@ public final class VentaPane extends BorderPane {
         TableColumn<ItemCarrito, String> subtotal = new TableColumn<>("Subtotal");
         subtotal.setCellValueFactory(data -> new SimpleStringProperty(formatearMoneda(data.getValue().subtotal())));
 
-        carritoTable.getColumns().addAll(List.of(localidad, cantidad, subtotal));
+        carritoTable.getColumns().addAll(List.of(concierto, localidad, cantidad, subtotal));
         carritoTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         Button quitarButton = new Button("Quitar ítem");
@@ -232,6 +238,7 @@ public final class VentaPane extends BorderPane {
         }
 
         double precioUnitario = Double.parseDouble(seleccionado.precio());
+        String tituloEvento = conciertoCombo.getValue().tituloEvento();
         carrito.stream()
                 .filter(item -> item.idInventario() == seleccionado.idInventario())
                 .findFirst()
@@ -239,11 +246,11 @@ public final class VentaPane extends BorderPane {
                         existente -> {
                             int index = carrito.indexOf(existente);
                             carrito.set(index, new ItemCarrito(
-                                    existente.idInventario(), existente.nombreLocalidad(),
+                                    existente.idInventario(), existente.tituloEvento(), existente.nombreLocalidad(),
                                     existente.cantidad() + cantidadPedida, precioUnitario));
                         },
                         () -> carrito.add(new ItemCarrito(
-                                seleccionado.idInventario(), seleccionado.nombreLocalidad(),
+                                seleccionado.idInventario(), tituloEvento, seleccionado.nombreLocalidad(),
                                 cantidadPedida, precioUnitario)));
 
         status.setText("");
@@ -317,7 +324,8 @@ public final class VentaPane extends BorderPane {
         return String.format(Locale.of("es", "GT"), "Q %,.2f", valor);
     }
 
-    private record ItemCarrito(int idInventario, String nombreLocalidad, int cantidad, double precioUnitario) {
+    private record ItemCarrito(int idInventario, String tituloEvento, String nombreLocalidad, int cantidad,
+            double precioUnitario) {
         double subtotal() {
             return cantidad * precioUnitario;
         }
