@@ -58,10 +58,11 @@ function fakeQrProvider() {
   };
 }
 
-function buildApp(repoOverrides, { qrProvider, mailer } = {}) {
+function buildApp(repoOverrides, { qrProvider, mailer, facturaProvider } = {}) {
   return createApp({
     ventaRepository: fakeVentaRepository(repoOverrides),
     qrProvider: qrProvider ?? fakeQrProvider(),
+    ...(facturaProvider ? { facturaProvider } : {}),
     mailer: mailer ?? { enviarBoletos: async () => {} },
     jwtSecret,
   });
@@ -432,3 +433,55 @@ for (const [descripcion, valor] of [
     assert.equal(llamadas, 0, 'no debe tocar la base con un método inválido');
   });
 }
+
+// --- Factura adjunta al correo ---
+
+test('POST /ventas/:id/enviar adjunta la factura de la venta al correo', async () => {
+  let recibido;
+  let pedido;
+  const mailer = { async enviarBoletos(args) { recibido = args; } };
+  const facturaProvider = {
+    async generar(args) {
+      pedido = args;
+      return { nombre: 'factura-A-000001.pdf', contenido: Buffer.from('%PDF-falso') };
+    },
+  };
+  const app = buildApp({ findById: async () => ventaConDetalle }, { mailer, facturaProvider });
+
+  const response = await request(app)
+    .post('/ventas/1/enviar')
+    .set('Authorization', `Bearer ${vendedorToken}`)
+    .send({ email: 'ana@example.com' });
+
+  assert.equal(response.status, 200);
+  assert.equal(recibido.factura.nombre, 'factura-A-000001.pdf');
+  assert.equal(recibido.factura.contenido.toString(), '%PDF-falso');
+  assert.equal(pedido.email, 'ana@example.com');
+  assert.equal(pedido.venta.id_venta, ventaConDetalle.id_venta);
+});
+
+test('POST /ventas/:id/enviar con la factura real adjunta un PDF válido', async () => {
+  let recibido;
+  const mailer = { async enviarBoletos(args) { recibido = args; } };
+  const app = buildApp({ findById: async () => ventaConDetalle }, { mailer });
+
+  await request(app).post('/ventas/1/enviar').set('Authorization', `Bearer ${vendedorToken}`).send({ email: 'ana@example.com' });
+
+  assert.equal(recibido.factura.contenido.subarray(0, 5).toString(), '%PDF-');
+  assert.match(recibido.factura.nombre, /^factura-A-\d{6}\.pdf$/);
+});
+
+test('POST /ventas/:id/enviar responde 500 si no se puede generar la factura, sin mandar el correo', async () => {
+  let enviado = false;
+  const mailer = { async enviarBoletos() { enviado = true; } };
+  const facturaProvider = { async generar() { throw new Error('boom'); } };
+  const app = buildApp({ findById: async () => ventaConDetalle }, { mailer, facturaProvider });
+
+  const response = await request(app)
+    .post('/ventas/1/enviar')
+    .set('Authorization', `Bearer ${vendedorToken}`)
+    .send({ email: 'ana@example.com' });
+
+  assert.equal(response.status, 500);
+  assert.equal(enviado, false);
+});

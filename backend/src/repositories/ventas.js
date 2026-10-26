@@ -133,7 +133,10 @@ export function createVentaRepository(pool) {
 
     async findById(idVenta) {
       const ventaResult = await pool.query(
-        'SELECT id_venta, id_vendedor, fecha_venta, total_venta, metodo_pago FROM ventas WHERE id_venta = $1',
+        `SELECT v.id_venta, v.id_vendedor, u.nombre_completo AS nombre_vendedor, v.fecha_venta, v.total_venta, v.metodo_pago
+         FROM ventas v
+         JOIN usuarios u ON u.id_usuario = v.id_vendedor
+         WHERE v.id_venta = $1`,
         [idVenta],
       );
       const venta = ventaResult.rows[0];

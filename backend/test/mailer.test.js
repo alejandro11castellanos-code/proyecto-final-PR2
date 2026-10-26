@@ -121,3 +121,24 @@ test('con apiKey y SMTP_HOST a la vez, gana la API de Brevo', async () => {
 
   assert.equal(llamadas.length, 1);
 });
+
+test('con una factura, la adjunta después de los QR en la API de Brevo', async () => {
+  const { fetchImpl, llamadas } = fetchFalso();
+  const mailer = createMailer({ apiKey: 'k', from: 'a@b.co', fetchImpl });
+  const factura = { nombre: 'factura-A-000007.pdf', contenido: Buffer.from('PDF-DE-PRUEBA') };
+
+  await mailer.enviarBoletos({ destinatario: 'a@b.co', venta, boletos, factura });
+
+  const { attachment } = JSON.parse(llamadas[0].opciones.body);
+  assert.equal(attachment.length, 3);
+  assert.deepEqual(attachment[2], { name: 'factura-A-000007.pdf', content: Buffer.from('PDF-DE-PRUEBA').toString('base64') });
+});
+
+test('sin factura el correo sigue llevando solo los QR', async () => {
+  const { fetchImpl, llamadas } = fetchFalso();
+  const mailer = createMailer({ apiKey: 'k', from: 'a@b.co', fetchImpl });
+
+  await mailer.enviarBoletos({ destinatario: 'a@b.co', venta, boletos });
+
+  assert.equal(JSON.parse(llamadas[0].opciones.body).attachment.length, 2);
+});

@@ -21,6 +21,7 @@ import { createAccesoRepository } from './repositories/accesos.js';
 import { createReporteRepository } from './repositories/reportes.js';
 import { createQrProvider } from './services/qrcode.js';
 import { createMailer } from './services/mailer.js';
+import { createFacturaProvider } from './services/factura.js';
 
 /**
  * Builds the Express application. Kept separate from server startup so tests can
@@ -36,6 +37,7 @@ export function createApp({
   accesoRepository = createAccesoRepository(pool),
   reporteRepository = createReporteRepository(pool),
   qrProvider = createQrProvider(),
+  facturaProvider = createFacturaProvider(),
   mailer = createMailer(),
   jwtSecret = process.env.JWT_SECRET,
   // Intentos de login FALLIDOS permitidos por IP en cada ventana. Con el servidor público, sin
@@ -77,7 +79,7 @@ export function createApp({
     '/conciertos/:idConcierto/inventario',
     createInventarioRouter({ inventarioRepository, conciertoRepository, localidadRepository, jwtSecret }),
   );
-  app.use('/ventas', createVentaRouter({ ventaRepository, qrProvider, mailer, jwtSecret }));
+  app.use('/ventas', createVentaRouter({ ventaRepository, qrProvider, facturaProvider, mailer, jwtSecret }));
   app.use('/accesos', createAccesoRouter({ accesoRepository, jwtSecret }));
   app.use('/acceso', createAccesoWebRouter());
   app.use('/reportes', createReporteRouter({ reporteRepository, jwtSecret }));

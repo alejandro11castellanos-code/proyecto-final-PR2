@@ -38,6 +38,9 @@ El plan gratuito de Render **bloquea los puertos SMTP**, así que el correo sale
 3. En Render: *Environment* -> agregar `BREVO_API_KEY` (la clave) y `MAIL_FROM` con el remitente
    verificado, por ejemplo `SVB-GUA <mi.correo@gmail.com>`. Render reinicia el servicio.
 
+Opcional: `FACTURA_EMISOR`, `FACTURA_NIT` y `FACTURA_DIRECCION` son los datos del emisor que salen en la
+factura PDF que se adjunta al correo; sin ellas la factura sale a nombre de "SVB-GUA", sin NIT ni dirección.
+
 La clave es un secreto: va solo en *Environment* (y en `backend/.env` para probar local), nunca en el
 repositorio. Los QR viajan como archivos PNG adjuntos (la API de Brevo no admite imágenes
 incrustadas). Sin `BREVO_API_KEY` el servidor intenta SMTP si hay `SMTP_HOST`; sin ninguno de los

@@ -15,7 +15,7 @@ function escapeHtml(valor) {
 
 // `incrustarQr` (SMTP): el QR va dentro del cuerpo vía cid. Sin él (API HTTPS de
 // Brevo, que no admite cid) el QR viaja como adjunto y el cuerpo lo indica.
-function renderHtml(venta, boletos, { incrustarQr }) {
+function renderHtml(venta, boletos, { incrustarQr, conFactura }) {
   const filas = boletos
     .map((boleto, index) => `
       <li style="margin-bottom:16px;">
@@ -32,6 +32,7 @@ function renderHtml(venta, boletos, { incrustarQr }) {
   return `
     <h1>Venta #${venta.id_venta}</h1>
     <p>Total: Q ${venta.total_venta}</p>
+    ${conFactura ? '<p>Adjuntamos la factura de su compra (PDF).</p>' : ''}
     <ul style="list-style:none; padding:0;">${filas}</ul>`;
 }
 
@@ -47,16 +48,20 @@ const BREVO_URL = 'https://api.brevo.com/v3/smtp/email';
 const ASUNTO = (venta) => `Tus boletos — venta #${venta.id_venta}`;
 const SIN_PREFIJO = (qr) => qr.replace(/^data:image\/png;base64,/, '');
 
-async function enviarPorBrevo({ apiKey, from, fetchImpl, destinatario, venta, boletos }) {
+async function enviarPorBrevo({ apiKey, from, fetchImpl, destinatario, venta, boletos, factura }) {
   const cuerpo = {
     sender: parsearRemitente(from),
     to: [{ email: destinatario }],
     subject: ASUNTO(venta),
-    htmlContent: renderHtml(venta, boletos, { incrustarQr: false }),
-    attachment: boletos.map((boleto, index) => ({
-      name: `boleto-${index + 1}.png`,
-      content: SIN_PREFIJO(boleto.qr),
-    })),
+    htmlContent: renderHtml(venta, boletos, { incrustarQr: false, conFactura: Boolean(factura) }),
+    attachment: [
+      ...boletos.map((boleto, index) => ({
+        name: `boleto-${index + 1}.png`,
+        content: SIN_PREFIJO(boleto.qr),
+      })),
+      // La factura (PDF) viaja después de los QR.
+      ...(factura ? [{ name: factura.nombre, content: factura.contenido.toString('base64') }] : []),
+    ],
   };
 
   let respuesta;
@@ -100,9 +105,9 @@ export function createMailer({
   from = process.env.MAIL_FROM || process.env.SMTP_FROM || 'SVB-GUA <no-reply@svb-gua.local>',
 } = {}) {
   return {
-    async enviarBoletos({ destinatario, venta, boletos }) {
+    async enviarBoletos({ destinatario, venta, boletos, factura }) {
       if (apiKey) {
-        return enviarPorBrevo({ apiKey, from, fetchImpl, destinatario, venta, boletos });
+        return enviarPorBrevo({ apiKey, from, fetchImpl, destinatario, venta, boletos, factura });
       }
       if (!host) {
         throw new MailerError(
@@ -123,13 +128,16 @@ export function createMailer({
         encoding: 'base64',
         cid: `boleto${index}`,
       }));
+      if (factura) {
+        attachments.push({ filename: factura.nombre, content: factura.contenido, contentType: 'application/pdf' });
+      }
 
       try {
         return await transporter.sendMail({
           from,
           to: destinatario,
           subject: ASUNTO(venta),
-          html: renderHtml(venta, boletos, { incrustarQr: true }),
+          html: renderHtml(venta, boletos, { incrustarQr: true, conFactura: Boolean(factura) }),
           attachments,
         });
       } catch (error) {

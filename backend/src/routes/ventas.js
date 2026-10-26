@@ -59,7 +59,7 @@ function validarMetodoPago(raw) {
   return { metodoPago: raw };
 }
 
-export function createVentaRouter({ ventaRepository, qrProvider, mailer, jwtSecret }) {
+export function createVentaRouter({ ventaRepository, qrProvider, facturaProvider, mailer, jwtSecret }) {
   const router = express.Router();
   // El rol de control de acceso solo valida ingresos: no vende ni consulta ventas.
   const requireAuth = [authenticateToken(jwtSecret), authorizeRoles('administrador', 'vendedor')];
@@ -139,7 +139,9 @@ export function createVentaRouter({ ventaRepository, qrProvider, mailer, jwtSecr
       if (!venta) return res.status(404).json({ error: 'Venta no encontrada.' });
 
       const boletos = await construirBoletos(venta, qrProvider);
-      await mailer.enviarBoletos({ destinatario: email.trim(), venta, boletos });
+      // La factura se genera antes de enviar: si falla, no sale un correo a medias (boletos sin su factura).
+      const factura = await facturaProvider.generar({ venta, email: email.trim() });
+      await mailer.enviarBoletos({ destinatario: email.trim(), venta, boletos, factura });
       res.json({ enviado: true, destinatario: email.trim() });
     } catch (error) {
       if (error instanceof MailerError) {

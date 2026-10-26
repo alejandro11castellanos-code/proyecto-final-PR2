@@ -191,6 +191,10 @@ luego **Ejecutar de todas formas**. Ambos incluyen su propio Java.
   Se cobra con tarjeta (simulada) o en efectivo (se escribe el monto recibido y la app
   calcula el cambio); el método queda guardado en la venta y se ve en "Mis ventas".
 
+- **Factura por correo:** al enviar los boletos por correo se adjunta la factura de la compra en
+  PDF (una factura estándar: número, fecha, renglones, IVA incluido y total). Es un comprobante, no
+  una factura electrónica (FEL) certificada por la SAT.
+
 - **Tabla cruzada (pivote):** en Reportes se elige qué va en filas, qué en
   columnas y qué medir (boletos o ingresos) entre concierto, localidad, artista,
   vendedor, día y método de pago. Se ve como mapa de calor con totales, justo debajo de los

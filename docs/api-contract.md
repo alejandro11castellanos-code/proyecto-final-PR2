@@ -288,12 +288,22 @@ de escritorio o incrustar en un `<img>`).
 ```
 
 `POST /ventas/:id/enviar` recibe `{ "email": "..." }`, valida el formato y
-manda un correo HTML con un QR por boleto. Con `BREVO_API_KEY` + `MAIL_FROM`
+manda un correo HTML con un QR por boleto y la **factura de la compra en PDF adjunta**
+(`factura-A-<id de venta con 6 dígitos>.pdf`, generada por `services/factura.js`). Con `BREVO_API_KEY` + `MAIL_FROM`
 (remitente verificado en Brevo) sale por la API HTTPS de Brevo y los QR van como
 PNG adjuntos; sin ella, por SMTP (`SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS`)
 con el QR incrustado (`cid`) más el PNG adjunto. Sin ninguno de los dos
 configurados responde `502` con un mensaje
-claro en vez de fallar oscuro dentro de nodemailer. Verificado enviando un
+claro en vez de fallar oscuro dentro de nodemailer.
+
+La factura: número `A-` + id de venta; fecha, método de pago y quién atendió; cliente "Consumidor
+final / CF" con el correo de envío (la taquilla no pide nombre ni NIT); un renglón por concierto y
+localidad con cantidad, precio unitario y subtotal; y el desglose del IVA incluido (12 %: base =
+total / 1.12 y IVA = total − base, en centavos enteros para que siempre sumen). El emisor sale de
+`FACTURA_EMISOR`, `FACTURA_NIT` y `FACTURA_DIRECCION` (opcionales; sin ellas, "SVB-GUA" sin NIT:
+no se inventan datos fiscales). Es un **comprobante de compra**, no una factura electrónica (FEL)
+certificada por la SAT, y el propio PDF lo dice. Si la factura no se puede generar, la ruta
+responde `500` y no se envía ningún correo (nunca salen boletos sin su factura). Verificado enviando un
 correo real a una casilla de prueba (Ethereal): asunto, remitente y los QR
 incrustados llegan correctos y son escaneables.
 
