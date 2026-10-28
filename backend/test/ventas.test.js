@@ -485,3 +485,50 @@ test('POST /ventas/:id/enviar responde 500 si no se puede generar la factura, si
   assert.equal(response.status, 500);
   assert.equal(enviado, false);
 });
+
+// --- NIT y nombre en la factura ---
+
+async function enviarConCliente(body, facturaProvider) {
+  let pedido;
+  const provider = facturaProvider ?? { async generar(args) { pedido = args; return { nombre: 'f.pdf', contenido: Buffer.from('%PDF-x') }; } };
+  const app = buildApp({ findById: async () => ventaConDetalle }, { facturaProvider: provider });
+  const response = await request(app)
+    .post('/ventas/1/enviar')
+    .set('Authorization', `Bearer ${vendedorToken}`)
+    .send({ email: 'ana@example.com', ...body });
+  return { response, pedido: () => pedido };
+}
+
+test('POST /ventas/:id/enviar pasa el NIT (normalizado) y el nombre a la factura', async () => {
+  const { response, pedido } = await enviarConCliente({ nit: '1234567-8', nombre: '  Juan Pérez ' });
+  assert.equal(response.status, 200);
+  assert.deepEqual(pedido().cliente, { nombre: 'Juan Pérez', nit: '12345678' });
+});
+
+test('POST /ventas/:id/enviar sin NIT ni nombre deja que la factura use Consumidor final / CF', async () => {
+  const { response, pedido } = await enviarConCliente({});
+  assert.equal(response.status, 200);
+  assert.deepEqual(pedido().cliente, { nombre: null, nit: null });
+  const vacios = await enviarConCliente({ nit: '', nombre: '   ' });
+  assert.deepEqual(vacios.pedido().cliente, { nombre: null, nit: null });
+});
+
+for (const [descripcion, body, campo] of [
+  ['un NIT inválido', { nit: 'abc' }, /nit/],
+  ['un NIT que no es texto', { nit: 12345678 }, /nit/],
+  ['un nombre demasiado largo', { nombre: 'x'.repeat(101) }, /nombre/],
+  ['un nombre que no es texto', { nombre: { a: 1 } }, /nombre/],
+]) {
+  test(`POST /ventas/:id/enviar responde 400 ante ${descripcion} y no envía nada`, async () => {
+    let enviado = false;
+    const mailer = { async enviarBoletos() { enviado = true; } };
+    const app = buildApp({ findById: async () => ventaConDetalle }, { mailer });
+    const response = await request(app)
+      .post('/ventas/1/enviar')
+      .set('Authorization', `Bearer ${vendedorToken}`)
+      .send({ email: 'ana@example.com', ...body });
+    assert.equal(response.status, 400);
+    assert.match(response.body.error, campo);
+    assert.equal(enviado, false);
+  });
+}

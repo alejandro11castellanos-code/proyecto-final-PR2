@@ -193,7 +193,8 @@ luego **Ejecutar de todas formas**. Ambos incluyen su propio Java.
 
 - **Factura por correo:** al enviar los boletos por correo se adjunta la factura de la compra en
   PDF (una factura estándar: número, fecha, renglones, IVA incluido y total). Es un comprobante, no
-  una factura electrónica (FEL) certificada por la SAT.
+  una factura electrónica (FEL) certificada por la SAT. Al enviar se puede indicar el nombre y el NIT del
+  cliente (opcionales; sin ellos sale a "Consumidor final / CF").
 
 - **Tabla cruzada (pivote):** en Reportes se elige qué va en filas, qué en
   columnas y qué medir (boletos o ingresos) entre concierto, localidad, artista,

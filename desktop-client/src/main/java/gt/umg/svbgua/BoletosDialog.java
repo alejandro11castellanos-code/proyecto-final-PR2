@@ -73,7 +73,15 @@ public final class BoletosDialog {
         HBox envio = new HBox(8, emailField, enviarButton);
         envio.setAlignment(Pos.CENTER_LEFT);
 
-        VBox pieDePagina = new VBox(8, envio, status);
+        // Datos del cliente para la factura: opcionales. Vacíos, la factura sale a "Consumidor final / CF".
+        Label facturaTitulo = new Label("Factura (opcional)");
+        facturaTitulo.getStyleClass().add("muted");
+        TextField nombreField = new TextField();
+        nombreField.setPromptText("Nombre (Consumidor final)");
+        TextField nitField = new TextField();
+        nitField.setPromptText("NIT (CF si no tiene)");
+
+        VBox pieDePagina = new VBox(8, facturaTitulo, nombreField, nitField, envio, status);
         pieDePagina.setPadding(new Insets(0, 16, 16, 16));
 
         BorderPane root = new BorderPane();
@@ -83,7 +91,7 @@ public final class BoletosDialog {
         root.setScaleX(0.94);
         root.setScaleY(0.94);
 
-        Scene escena = new Scene(root, 320, 610);
+        Scene escena = new Scene(root, 320, 700);
         Tema.aplicar(escena);
         stage.setScene(escena);
         stage.show();
@@ -111,7 +119,8 @@ public final class BoletosDialog {
             enviarButton.setDisable(true);
             status.setText("Enviando...");
             Async.run(
-                    () -> client.enviarBoletos(token, idVenta, destinatario),
+                    () -> client.enviarBoletos(token, idVenta, destinatario, nitField.getText().trim(),
+                            nombreField.getText().trim()),
                     () -> {
                         enviarButton.setDisable(false);
                         status.setText("Boletos enviados a " + destinatario + ".");

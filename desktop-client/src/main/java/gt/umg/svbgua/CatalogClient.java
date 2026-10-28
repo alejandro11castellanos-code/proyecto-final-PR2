@@ -178,8 +178,9 @@ public final class CatalogClient {
         }
     }
 
-    public void enviarBoletos(String token, int idVenta, String email) {
-        send("POST", "/ventas/" + idVenta + "/enviar", token, new EnviarRequest(email), EnviarResponse.class);
+    /** @param nit y nombre: datos del cliente para la factura; vacíos o null = "Consumidor final / CF" */
+    public void enviarBoletos(String token, int idVenta, String email, String nit, String nombre) {
+        send("POST", "/ventas/" + idVenta + "/enviar", token, new EnviarRequest(email, nit, nombre), EnviarResponse.class);
     }
 
     // ---- Control de acceso ----
@@ -337,7 +338,7 @@ public final class CatalogClient {
     private record BoletosResponse(int idVenta, List<Boleto> boletos) {
     }
 
-    private record EnviarRequest(String email) {
+    private record EnviarRequest(String email, String nit, String nombre) {
     }
 
     private record EnviarResponse(boolean enviado, String destinatario) {

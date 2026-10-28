@@ -297,13 +297,19 @@ configurados responde `502` con un mensaje
 claro en vez de fallar oscuro dentro de nodemailer.
 
 La factura: número `A-` + id de venta; fecha, método de pago y quién atendió; cliente "Consumidor
-final / CF" con el correo de envío (la taquilla no pide nombre ni NIT); un renglón por concierto y
+final / CF" con el correo de envío, o el nombre y el NIT que se indiquen (ver abajo); un renglón por concierto y
 localidad con cantidad, precio unitario y subtotal; y el desglose del IVA incluido (12 %: base =
 total / 1.12 y IVA = total − base, en centavos enteros para que siempre sumen). El emisor sale de
 `FACTURA_EMISOR`, `FACTURA_NIT` y `FACTURA_DIRECCION` (opcionales; sin ellas, "SVB-GUA" sin NIT:
 no se inventan datos fiscales). Es un **comprobante de compra**, no una factura electrónica (FEL)
 certificada por la SAT, y el propio PDF lo dice. Si la factura no se puede generar, la ruta
-responde `500` y no se envía ningún correo (nunca salen boletos sin su factura). Verificado enviando un
+responde `500` y no se envía ningún correo (nunca salen boletos sin su factura).
+
+`POST /ventas/:id/enviar` acepta además `nit` y `nombre` (ambos opcionales) para que la factura salga a nombre
+del cliente: `{ "email": "...", "nit": "1234567-8", "nombre": "Juan Pérez" }`. Sin ellos, o vacíos, la factura
+sale a "Consumidor final / CF". El NIT se normaliza (se aceptan guion, espacios, minúsculas y `C/F`) y debe tener
+forma de NIT: dígitos y un dígito verificador (que puede ser `K`), o `CF`; si no, responde `400`. **Solo se valida
+el formato**: no se consulta a la SAT ni se comprueba el dígito verificador. El nombre admite hasta 100 caracteres. Verificado enviando un
 correo real a una casilla de prueba (Ethereal): asunto, remitente y los QR
 incrustados llegan correctos y son escaneables.
 

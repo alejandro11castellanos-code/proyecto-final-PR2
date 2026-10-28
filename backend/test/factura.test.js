@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { armarFactura, generarFacturaPdf, createFacturaProvider } from '../src/services/factura.js';
+import { armarFactura, generarFacturaPdf, createFacturaProvider, normalizarNit } from '../src/services/factura.js';
 
 const venta = {
   id_venta: 42,
@@ -97,4 +97,38 @@ test('createFacturaProvider entrega nombre de archivo y contenido listos para ad
   const { nombre, contenido } = await createFacturaProvider().generar({ venta, email: 'a@b.co' });
   assert.equal(nombre, 'factura-A-000042.pdf');
   assert.equal(contenido.subarray(0, 5).toString(), '%PDF-');
+});
+
+// --- NIT y nombre del cliente (opcionales) ---
+
+test('armarFactura usa el nombre y el NIT del cliente cuando se dan', () => {
+  const f = armarFactura(venta, { email: 'a@b.co', cliente: { nombre: '  Juan Pérez  ', nit: '12345678' } });
+  assert.deepEqual(f.cliente, { nombre: 'Juan Pérez', nit: '1234567-8', email: 'a@b.co' });
+});
+
+test('armarFactura: sin datos del cliente sigue siendo Consumidor final / CF', () => {
+  for (const cliente of [undefined, {}, { nombre: '', nit: '' }, { nombre: null, nit: null }]) {
+    const f = armarFactura(venta, { cliente });
+    assert.equal(f.cliente.nombre, 'Consumidor final');
+    assert.equal(f.cliente.nit, 'CF');
+  }
+});
+
+test('normalizarNit acepta guion, espacios, minúsculas, dígito verificador K y CF', () => {
+  assert.equal(normalizarNit('1234567-8'), '12345678');
+  assert.equal(normalizarNit(' 1234 567 - 8 '), '12345678');
+  assert.equal(normalizarNit('123456-k'), '123456K');
+  assert.equal(normalizarNit('cf'), 'CF');
+  assert.equal(normalizarNit('C/F'), 'CF');
+});
+
+test('normalizarNit rechaza lo que no es un NIT', () => {
+  for (const malo of ['abc', '12-34-56x', '1234567890123456', '-', '1', 'NIT123']) {
+    assert.equal(normalizarNit(malo), null, malo);
+  }
+});
+
+test('la factura muestra el NIT con su guion y la generación del PDF acepta al cliente', async () => {
+  const pdf = await generarFacturaPdf(venta, { cliente: { nombre: 'María del Carmen López', nit: '9876543-2' } });
+  assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');
 });

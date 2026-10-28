@@ -2,6 +2,7 @@ import express from 'express';
 import { authenticateToken, authorizeRoles } from '../middleware/auth.js';
 import { InventarioNoEncontradoError, DisponibilidadInsuficienteError } from '../repositories/ventas.js';
 import { MailerError } from '../services/mailer.js';
+import { normalizarNit } from '../services/factura.js';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -57,6 +58,29 @@ function validarMetodoPago(raw) {
     return { error: `metodo_pago debe ser uno de: ${METODOS_PAGO.join(', ')}.` };
   }
   return { metodoPago: raw };
+}
+
+// NIT y nombre del cliente para la factura: ambos opcionales. Sin ellos, la factura sale a "Consumidor final / CF".
+function leerCliente(body) {
+  const cliente = { nombre: null, nit: null };
+  const { nit, nombre } = body ?? {};
+
+  if (nit !== undefined && nit !== null && nit !== '') {
+    const normalizado = normalizarNit(nit);
+    if (!normalizado) {
+      return { error: 'nit no es válido: use dígitos con su dígito verificador (por ejemplo 1234567-8) o CF.' };
+    }
+    cliente.nit = normalizado;
+  }
+  if (nombre !== undefined && nombre !== null) {
+    if (typeof nombre !== 'string' || /[\u0000-\u001f]/.test(nombre)) {
+      return { error: 'nombre debe ser texto sin caracteres de control.' };
+    }
+    const limpio = nombre.trim();
+    if (limpio.length > 100) return { error: 'nombre no puede superar los 100 caracteres.' };
+    cliente.nombre = limpio || null;
+  }
+  return { cliente };
 }
 
 export function createVentaRouter({ ventaRepository, qrProvider, facturaProvider, mailer, jwtSecret }) {
@@ -134,13 +158,16 @@ export function createVentaRouter({ ventaRepository, qrProvider, facturaProvider
       return res.status(400).json({ error: 'email es obligatorio y debe tener un formato válido.' });
     }
 
+    const { cliente, error: errorCliente } = leerCliente(req.body);
+    if (errorCliente) return res.status(400).json({ error: errorCliente });
+
     try {
       const venta = await ventaRepository.findById(req.params.id);
       if (!venta) return res.status(404).json({ error: 'Venta no encontrada.' });
 
       const boletos = await construirBoletos(venta, qrProvider);
       // La factura se genera antes de enviar: si falla, no sale un correo a medias (boletos sin su factura).
-      const factura = await facturaProvider.generar({ venta, email: email.trim() });
+      const factura = await facturaProvider.generar({ venta, email: email.trim(), cliente });
       await mailer.enviarBoletos({ destinatario: email.trim(), venta, boletos, factura });
       res.json({ enviado: true, destinatario: email.trim() });
     } catch (error) {

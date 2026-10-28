@@ -14,14 +14,30 @@ function formatearFecha(iso) {
   return coincide ? `${coincide[3]}/${coincide[2]}/${coincide[1]} ${coincide[4]}:${coincide[5]}` : String(iso);
 }
 
+/**
+ * NIT en su forma canónica (sin guion ni espacios, en mayúsculas): "1234567-8" -> "12345678"; "CF" y "C/F" -> "CF".
+ * Devuelve null si no tiene forma de NIT (dígitos con un dígito verificador, que puede ser K). Solo valida el formato:
+ * no consulta a la SAT ni comprueba el dígito verificador.
+ */
+export function normalizarNit(texto) {
+  if (typeof texto !== 'string') return null;
+  const limpio = texto.replace(/[\s\-/]/g, '').toUpperCase();
+  if (limpio === 'CF') return 'CF';
+  return /^\d{1,12}[\dK]$/.test(limpio) ? limpio : null;
+}
+
+// "12345678" -> "1234567-8" (el último carácter es el dígito verificador).
+const formatearNit = (nit) => (nit === 'CF' ? 'CF' : `${nit.slice(0, -1)}-${nit.slice(-1)}`);
+
 const numeroDeFactura = (idVenta) => `A-${String(idVenta).padStart(6, '0')}`;
 
 /**
  * Datos de la factura ya formateados, sin nada de PDF: se prueban a mano y el dibujo solo los coloca.
- * `venta` es la que devuelve `findById` (con sus renglones). Quien paga es "Consumidor final / CF":
- * el sistema no pide nombre ni NIT en la taquilla, solo el correo al que se envían los boletos.
+ * `venta` es la que devuelve `findById` (con sus renglones). Si no se dan nombre y NIT del cliente, la factura
+ * sale a nombre de "Consumidor final / CF".
  */
-export function armarFactura(venta, { email, emisor } = {}) {
+export function armarFactura(venta, { email, emisor, cliente } = {}) {
+  const nit = normalizarNit(cliente?.nit ?? '');
   const total = aCentavos(venta.total_venta);
   const base = Math.round(total / (1 + IVA));
 
@@ -31,7 +47,11 @@ export function armarFactura(venta, { email, emisor } = {}) {
     metodoPago: venta.metodo_pago === 'efectivo' ? 'Efectivo' : 'Tarjeta',
     vendedor: venta.nombre_vendedor ?? null,
     emisor: emisor ?? { nombre: 'SVB-GUA', nit: null, direccion: null },
-    cliente: { nombre: 'Consumidor final', nit: 'CF', email: email ?? null },
+    cliente: {
+      nombre: (cliente?.nombre ?? '').trim() || 'Consumidor final',
+      nit: nit ? formatearNit(nit) : 'CF',
+      email: email ?? null,
+    },
     lineas: venta.items.map((item) => ({
       descripcion: `${item.titulo_evento}${item.nombre_artistico ? ` (${item.nombre_artistico})` : ''} — ${item.nombre_localidad}`,
       cantidad: item.cantidad,
@@ -194,10 +214,10 @@ export function createFacturaProvider({
   },
 } = {}) {
   return {
-    async generar({ venta, email }) {
+    async generar({ venta, email, cliente }) {
       return {
         nombre: `factura-${numeroDeFactura(venta.id_venta)}.pdf`,
-        contenido: await generarFacturaPdf(venta, { email, emisor }),
+        contenido: await generarFacturaPdf(venta, { email, emisor, cliente }),
       };
     },
   };
